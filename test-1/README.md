@@ -44,6 +44,7 @@ Requires Node.js 18 or newer.
 
 ```bash
 npm install
+npm test
 npm run dev
 ```
 
@@ -59,7 +60,7 @@ Open the Vite URL (normally http://127.0.0.1:5173). The dev command starts both 
 6. Review the measured checks, findings, evidence locations and suggested fixes.
 
 ### What the backend checks
-- **Website URL:** makes a bounded homepage request and reviews the HTTP status, HTTPS, CSP, HSTS, clickjacking protection, MIME-sniffing protection, Referrer-Policy, Permissions-Policy, observed cookie flags and technology-banner disclosure. It does not crawl pages, log in, submit forms or test protected endpoints.
+- **Website URL:** makes a bounded homepage check (including limited redirects) and reviews the HTTP status, HTTPS, CSP, HSTS, clickjacking protection, MIME-sniffing protection, Referrer-Policy, Permissions-Policy, observed cookie flags and technology-banner disclosure. It does not crawl pages, log in, submit forms or test protected endpoints.
 - **Source code:** reads imported files as text and looks for heuristic patterns related to IDOR-style record routes, missing role guards on sensitive write routes, client-controlled checkout prices and possible SQL string construction. These are review hints, not confirmed vulnerabilities.
 - **Permission matrix:** checks enabled non-owner grants for descriptions suggesting broad access to other users' records or sensitive business settings.
 
