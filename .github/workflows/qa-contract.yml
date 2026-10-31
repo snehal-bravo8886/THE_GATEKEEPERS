@@ -1,0 +1,24 @@
+name: QA contract checks
+
+on:
+  push:
+    branches: [main, "test/qa"]
+    paths:
+      - "tests/qa/**"
+      - ".github/workflows/qa-contract.yml"
+  pull_request:
+    paths:
+      - "tests/qa/**"
+      - ".github/workflows/qa-contract.yml"
+
+jobs:
+  qa-offline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verify offline QA unit checks
+        working-directory: tests/qa
+        run: npm test
