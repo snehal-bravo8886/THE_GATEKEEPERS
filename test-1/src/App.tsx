@@ -364,7 +364,6 @@ export default function App(){
  const [events,setEvents]=useState<EventItem[]>([]);
  const [sites,setSites]=useState<SiteProfile[]>([]);
  const [activeSiteId,setActiveSiteId]=useState('');
- const [siteNameInput,setSiteNameInput]=useState('');
  const [siteUrlInput,setSiteUrlInput]=useState('');
  const [inputMode,setInputMode]=useState<'website'|'source'>('website');
  const [sourceFiles,setSourceFiles]=useState<SourceFile[]>([]);
@@ -441,12 +440,12 @@ export default function App(){
   const url=inputMode==='website'?parsedWebsiteUrl(siteUrlInput):'';
   if(inputMode==='website'&&!url){setToast('Enter a valid website address');return}
   if(inputMode==='source'&&!sourceFiles.length){setToast('Add a ZIP, folder or code files first');return}
-  const fallbackName=inputMode==='website'?new URL(url).hostname:'Uploaded source project';
+  const fallbackName=inputMode==='website'?new URL(url).hostname:`${selectedScenario?.title??'Project'} source code`;
   const site:SiteProfile={id:`site-${id()}`,name:siteNameInput.trim()||fallbackName,url,kind:inputMode,sourceFiles:inputMode==='source'?sourceFiles.map(({path,size})=>({path,size})):[],scenario:scenarioId,lists:structuredClone(lists),events:[],model,role:null};
   setSites(previous=>[...previous,site]);setActiveSiteId(site.id);
   setLists(structuredClone(lists));setEvents([]);setRole(null);
   if(inputMode==='source'){void saveSourceBundle(site.id,sourceFiles).catch(()=>setToast('Could not save code files in this browser'));}
-  setSourceFiles([]);setSiteNameInput('');setSiteUrlInput('');setAuthorized(false);setPage('setup');setToast(inputMode==='source'?'Source code added — configure its permissions':'Website added — configure its permissions');
+  setSourceFiles([]);setSiteUrlInput('');setAuthorized(false);setPage('setup');setToast(inputMode==='source'?'Source code added — configure its permissions':'Website added — configure its permissions');
  }
  function startNewTarget(){setActiveSiteId('');setSiteNameInput('');setSiteUrlInput('');setInputMode('website');setSourceFiles([]);setSourceError('');setAuthorized(false);setIsDragging(false);setScenarioId(null);setPage(model?'scenario':'model')}
   function chooseModel(next:Model){setActiveSiteId('');setModel(next);setRole(null);setScenarioId(null);setLists(structuredClone(templates));setSiteNameInput('');setSiteUrlInput('');setInputMode('website');setSourceFiles([]);setSourceError('');setAuthorized(false);setIsDragging(false);setPage('scenario')}
@@ -536,7 +535,6 @@ export default function App(){
  <section className="card target-form">
   <div className="heading"><div><small>STEP 3 · ADD YOUR PROJECT</small><h2>Add a website link or source code</h2><p>Choose how you want to provide the project. You can give us the live URL or the actual code files.</p></div><span className="target-mark"><Code2 size={21}/></span></div>
   {selectedScenario&&<div className="selected-scenario-note"><span>{selectedScenario.emoji}</span><div><small>SELECTED TEST SUITE</small><b>{selectedScenario.title}</b><em>{selectedScenario.cases.length} example access tests ready</em></div><button type="button" className="link" onClick={()=>setPage('scenario')}>Change</button></div>}
-  <label className="site-name-field">Project name <span>Optional</span><input value={siteNameInput} onChange={e=>setSiteNameInput(e.target.value)} placeholder="e.g. My Vibe-Coded Store"/></label>
   <div className="input-modes">
    <button type="button" className={inputMode==='website'?'mode-option selected':'mode-option'} onClick={()=>{setInputMode('website');setSourceError('')}}><Globe size={16}/> Website link</button>
    <button type="button" className={inputMode==='source'?'mode-option selected':'mode-option'} onClick={()=>{setInputMode('source');setSourceError('')}}><Code2 size={16}/> Source code</button>
