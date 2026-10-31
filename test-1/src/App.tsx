@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties, type DragEvent } from 'react';
 import { ShieldCheck, Building2, GraduationCap, UserRound, BriefcaseBusiness, Users, LayoutDashboard, SlidersHorizontal, Plus, Trash2, Check, AlertTriangle, Activity, Search, ArrowRight, RotateCcw, X, LockKeyhole, Clock3, Globe, ExternalLink } from 'lucide-react';
 
 type Model = 'business' | 'organisation';
@@ -154,11 +154,11 @@ export default function App(){
   const site:SiteProfile={id:`site-${id()}`,name:siteNameInput.trim()||new URL(url).hostname,url,lists:structuredClone(templates),events:[],model,role:null};
   setSites(previous=>[...previous,site]);
   setActiveSiteId(site.id);
-  setLists(structuredClone(templates));setEvents([]);setModel(null);setRole(null);
+  setLists(structuredClone(templates));setEvents([]);setRole(null);
   setSiteNameInput('');setSiteUrlInput('');setAuthorized(false);setPage('setup');setToast('Website added — configure its permissions');
  }
  function chooseModel(next:Model){setModel(next);setRole(null);setPage('targets')}
-  function handleWebsiteDrop(event:React.DragEvent<HTMLDivElement>){
+  function handleWebsiteDrop(event:DragEvent<HTMLDivElement>){
    event.preventDefault();setIsDragging(false);
    const raw=event.dataTransfer.getData('text/uri-list')||event.dataTransfer.getData('text/plain')||event.dataTransfer.getData('text');
    const candidate=raw.split(/\\r?\\n/).map(value=>value.trim()).find(value=>value&&!value.startsWith('#'));
