@@ -489,7 +489,7 @@ export default function App(){
   setSites(previous=>[...previous,site]);setActiveSiteId(site.id);
   setLists(structuredClone(lists));setEvents([initialEvent]);setRole(null);
   if(inputMode==='source'){void saveSourceBundle(site.id,sourceFiles).catch(()=>setToast('Could not save code files in this browser'));}
-  setSourceFiles([]);setSiteUrlInput('');setAuthorized(false);setPage('setup');setToast(inputMode==='source'?'Source code added — configure its permissions':'Website added — configure its permissions');
+  if(inputMode!=='source')setSourceFiles([]);setSiteUrlInput('');setAuthorized(false);setPage('setup');setToast(inputMode==='source'?'Source code added — configure its permissions':'Website added — configure its permissions');
  }
  function startNewTarget(){setActiveSiteId('');setSiteUrlInput('');setInputMode('website');setSourceFiles([]);setSourceError('');setAuthorized(false);setIsDragging(false);setScenarioId(null);setPage(model?'scenario':'model')}
   function chooseModel(next:Model){setActiveSiteId('');setModel(next);setRole(null);setScenarioId(null);setLists(structuredClone(templates));setSiteUrlInput('');setInputMode('website');setSourceFiles([]);setSourceError('');setAuthorized(false);setIsDragging(false);setPage('scenario')}
