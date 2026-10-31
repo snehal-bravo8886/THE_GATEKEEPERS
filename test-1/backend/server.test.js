@@ -39,17 +39,24 @@ test('local scan engine checks source code, website headers and request authoriz
   await waitForBackend();
 
   const sourceFiles = [{
-    path: 'routes/orders.js',
-    size: 220,
+    path: 'server.js',
+    size: 420,
     content: [
-      "app.get('/api/orders/:id', async (req, res) => {",
-      '  const order = await orders.findById(req.params.id);',
-      '  return res.json(order);',
-      '});',
-      "app.post('/api/checkout', async (req, res) => {",
-      '  const total = req.body.unitPrice * req.body.quantity;',
-      '  return res.json({ total });',
-      '});'
+      "const url = new URL(req.url, 'http://localhost');",
+      "if (req.method === 'GET' && url.pathname.startsWith('/api/orders/')) {",
+      '  const id = url.pathname.split(\'/\').pop();',
+      '  const order = orders.find(item => item.id === id);',
+      '  sendJson(res, 200, order);',
+      '}',
+      "if (req.method === 'POST' && url.pathname === '/api/products/1/update') {",
+      '  const body = await readBody(req);',
+      '  product.price = body.price;',
+      '}',
+      "if (req.method === 'POST' && url.pathname === '/api/checkout') {",
+      '  const body = await readBody(req);',
+      '  const total = body.unitPrice * body.quantity;',
+      '  sendJson(res, 200, { total });',
+      '}'
     ].join('\n')
   }];
 
