@@ -491,12 +491,26 @@ async function serveStatic(req, res) {
   }
 }
 
+function requestOriginIsLocal(req) {
+  const origin = req.headers.origin;
+  if (!origin) return true;
+  try {
+    return new URL(origin).host === req.headers.host;
+  } catch {
+    return false;
+  }
+}
+
 const server = createServer(async (req, res) => {
   if (req.method === 'GET' && req.url === '/api/health') {
     sendJson(res, 200, { ok: true, service: 'CanTheySeeIt scan engine', mode: 'local-first', version: '0.1.0' });
     return;
   }
   if (req.method === 'POST' && req.url === '/api/scan') {
+    if (!requestOriginIsLocal(req)) {
+      sendJson(res, 403, { error: 'Cross-origin scan requests are not accepted by the local scanner.' });
+      return;
+    }
     try {
       const payload = await readJson(req);
       const result = await runScan(payload);
