@@ -167,6 +167,8 @@ export default function App() {
   const [latestResult, setLatestResult] = useState<TestResult | null>(null);
   const [history, setHistory] = useState<TestResult[]>([]);
   const [demoVerdict, setDemoVerdict] = useState<Verdict>("FAIL");
+  const [historyQuery, setHistoryQuery] = useState("");
+  const [historyFilter, setHistoryFilter] = useState<"ALL" | Verdict>("ALL");
 
   const selectedActor = actors.find(actor => actor.id === actorId)!;
   const selectedResource = resources.find(resource => resource.id === resourceId)!;
@@ -272,6 +274,16 @@ export default function App() {
   }
 
   const currentResult = latestResult ?? history[0] ?? null;
+  const passCount = history.filter(item => item.verdict === "PASS").length;
+  const failCount = history.filter(item => item.verdict === "FAIL").length;
+  const inconclusiveCount = history.filter(item => item.verdict === "INCONCLUSIVE").length;
+  const filteredHistory = history.filter(item => {
+    const query = historyQuery.trim().toLowerCase();
+    const matchesQuery = !query || [item.rule, item.id, item.target, item.actorId, item.resourceId]
+      .some(value => value.toLowerCase().includes(query));
+    const matchesVerdict = historyFilter === "ALL" || item.verdict === historyFilter;
+    return matchesQuery && matchesVerdict;
+  });
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans">
@@ -465,6 +477,20 @@ export default function App() {
 
         {activeTab === "dashboard" && (
           <section className="mx-auto max-w-5xl space-y-6">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                ["Total test runs", history.length, "All recorded executions"],
+                ["Passed", passCount, "Expected behaviour observed"],
+                ["Failed", failCount, "Unexpected access or behaviour"],
+                ["Inconclusive", inconclusiveCount, "Could not establish a verdict"]
+              ].map(([label, value, hint]) => (
+                <div key={String(label)} className="rounded-2xl border border-slate-800 bg-slate-900 p-4">
+                  <p className="text-xs text-slate-400">{label}</p>
+                  <p className="mt-2 text-2xl font-bold tabular-nums">{value}</p>
+                  <p className="mt-1 text-[11px] text-slate-500">{hint}</p>
+                </div>
+              ))}
+            </div>
             <div className="flex flex-col justify-between gap-4 rounded-2xl border border-slate-800 bg-slate-900 p-6 sm:flex-row sm:items-center">
               <div><p className="text-xs uppercase tracking-widest text-cyan-400">Verification report</p><h1 className="mt-1 text-2xl font-bold">{currentResult?.rule ?? "No verification run yet"}</h1><p className="mt-2 break-all font-mono text-xs text-slate-500">{currentResult?.target ?? "Run a rule from the wizard to see results."}</p></div>
               <div className="flex items-center gap-3">
@@ -494,7 +520,25 @@ export default function App() {
                   <div className="mb-3 flex items-center gap-2"><Activity className="text-cyan-400"/><h2 className="font-bold">Explanation and evidence</h2></div>
                   <p className="text-sm leading-relaxed text-slate-300">{currentResult.explanation}</p>
                   {currentResult.evidence?.responseSummary && <p className="mt-3 rounded-lg bg-slate-950 p-3 font-mono text-xs text-slate-300">{currentResult.evidence.responseSummary}</p>}
+                  {currentResult.evidence?.httpStatus && (
+                    <div className="mt-4 rounded-xl border border-slate-800 bg-slate-950 p-4">
+                      <p className="text-xs font-semibold text-slate-300">HTTP response interpretation</p>
+                      <p className="mt-2 text-sm text-slate-400">
+                        {currentResult.evidence.httpStatus === 401
+                          ? "401 Unauthorized: the request did not establish a valid authenticated identity."
+                          : currentResult.evidence.httpStatus === 403
+                          ? "403 Forbidden: the server refused the requested action. Check that this matches the configured policy."
+                          : currentResult.evidence.httpStatus >= 200 && currentResult.evidence.httpStatus < 300
+                          ? "2xx Success: the server accepted the request. For a DENY rule, check carefully whether protected data was exposed or changed."
+                          : "Review the response status together with the returned evidence and expected policy."}
+                      </p>
+                    </div>
+                  )}
                   {currentResult.suggestion && <div className="mt-4 rounded-xl border border-amber-500/30 bg-amber-950/20 p-4"><p className="text-xs font-bold uppercase tracking-wide text-amber-300">Suggested remediation</p><p className="mt-2 text-sm text-slate-200">{currentResult.suggestion}</p></div>}
+                  <details className="mt-5 rounded-xl border border-slate-800 bg-slate-950">
+                    <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-cyan-200">View complete technical evidence (JSON)</summary>
+                    <pre className="max-h-96 overflow-auto border-t border-slate-800 p-4 text-xs leading-relaxed text-slate-300">{JSON.stringify(currentResult, null, 2)}</pre>
+                  </details>
                   <p className="mt-4 text-[11px] text-slate-500">A PASS applies only to this configured rule and test setup. It does not certify the whole application as secure.</p>
                 </div>
               </>
@@ -505,9 +549,20 @@ export default function App() {
         {activeTab === "history" && (
           <section className="mx-auto max-w-5xl space-y-5">
             <div><p className="text-xs uppercase tracking-widest text-cyan-400">Previous runs</p><h1 className="mt-1 text-2xl font-bold">Verification history</h1><p className="mt-2 text-sm text-slate-400">This browser stores a local history. Connect the history API for shared/server-side persistence.</p></div>
-            {history.length === 0 ? <div className="rounded-2xl border border-dashed border-slate-700 p-12 text-center text-sm text-slate-400">No test history yet.</div> : (
+            {history.length > 0 && (
+              <div className="flex flex-col gap-3 rounded-2xl border border-slate-800 bg-slate-900 p-4 sm:flex-row">
+                <input value={historyQuery} onChange={event => setHistoryQuery(event.target.value)} placeholder="Search by rule, test ID, actor, resource or URL…" className="min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-cyan-400" />
+                <select value={historyFilter} onChange={event => setHistoryFilter(event.target.value as "ALL" | Verdict)} className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 outline-none focus:border-cyan-400">
+                  <option value="ALL">All verdicts</option>
+                  <option value="PASS">PASS</option>
+                  <option value="FAIL">FAIL</option>
+                  <option value="INCONCLUSIVE">INCONCLUSIVE</option>
+                </select>
+              </div>
+            )}
+            {history.length === 0 ? <div className="rounded-2xl border border-dashed border-slate-700 p-12 text-center text-sm text-slate-400">No test history yet. Run your first verification to see it here.</div> : filteredHistory.length === 0 ? <div className="rounded-2xl border border-dashed border-slate-700 p-10 text-center text-sm text-slate-400">No runs match those search or filter settings.</div> : (
               <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900">
-                {history.map(item => (
+                {filteredHistory.map(item => (
                   <div key={item.id} className="flex flex-col justify-between gap-3 border-b border-slate-800 p-5 last:border-0 sm:flex-row sm:items-center">
                     <div><p className="font-semibold">{item.rule}</p><p className="mt-1 break-all font-mono text-xs text-slate-500">{item.id} · {item.target}</p><p className="mt-1 text-xs text-slate-500">{new Date(item.timestamp).toLocaleString()}</p></div>
                     <div className="flex items-center gap-3"><StatusBadge verdict={item.verdict}/><button onClick={() => { setLatestResult(item); setActiveTab("dashboard"); }} className="rounded-lg bg-slate-800 px-3 py-2 text-xs hover:bg-slate-700">View result</button><button onClick={() => executeTest(item)} disabled={isVerifying} className="rounded-lg bg-slate-800 px-3 py-2 text-xs hover:bg-slate-700">Retest</button></div>
