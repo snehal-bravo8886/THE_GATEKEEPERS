@@ -9,6 +9,10 @@ type Permission = { id:string; title:string; description:string; group:string; r
 type EventItem = { id:string; time:string; title:string; detail:string; tone:'safe'|'warning'|'danger'|'neutral'; sample?:boolean };
 type SourceFile = { path:string; size:number; content:string };
 type SiteProfile = { id:string; name:string; url:string; kind?:'website'|'source'; sourceFiles?:{path:string;size:number}[]; lists:Record<Role,Permission[]>; events:EventItem[]; model:Model|null; role:Role|null };
+type ScenarioId = 'medical-clinic'|'restaurant'|'small-business'|'college-event'|'marks-grades'|'attendance'|'library'|'exam-management'|'student-records';
+type ScenarioCase = { title:string; outcome:'ALLOW'|'DENY'; note:string };
+type ScenarioDefinition = { id:ScenarioId; model:Model; title:string; emoji:string; description:string; roles:Partial<Record<Role,string>>; cases:ScenarioCase[] };
+
 const roleData:Record<Model,{id:Role;name:string;desc:string;icon:any}[]> = {
  business:[
   {id:'customer',name:'Customer',desc:'People who buy or use your services.',icon:UserRound},
@@ -72,6 +76,250 @@ const templates:Record<Role,Permission[]> = {
   p('t9','Manage all accounts','Create, disable or change accounts.','Administration','Critical',false)
  ]
 };
+
+const scenarios:ScenarioDefinition[] = [
+ {id:'medical-clinic',model:'business',title:'Medical clinic',emoji:'🩺',description:'Protect patient records, appointments, prescriptions and clinic administration.',roles:{customer:'Patient',employee:'Receptionist / Staff',owner:'Clinic Admin / Doctor'},cases:[
+  {title:'Patient views their own appointment',outcome:'ALLOW',note:'Patients can see their own bookings.'},
+  {title:'Patient opens another patient’s medical file',outcome:'DENY',note:'Private health records must stay separated.'},
+  {title:'Receptionist changes a prescription',outcome:'DENY',note:'Clinical actions need an authorised clinician.'},
+  {title:'Clinic admin updates a patient record',outcome:'ALLOW',note:'Authorised clinic administrators can manage records.'}
+ ]},
+ {id:'restaurant',model:'business',title:'Restaurant',emoji:'🍽️',description:'Control menu updates, customer orders, refunds and payment settings.',roles:{customer:'Diner / Customer',employee:'Restaurant Staff',owner:'Restaurant Owner'},cases:[
+  {title:'Customer checks their own order',outcome:'ALLOW',note:'Customers can track their own purchases.'},
+  {title:'Customer reads another diner’s order',outcome:'DENY',note:'Orders and contact details are private.'},
+  {title:'Staff member changes payout bank details',outcome:'DENY',note:'Only the owner should manage payout settings.'},
+  {title:'Owner issues an approved refund',outcome:'ALLOW',note:'Owners can resolve payment issues.'}
+ ]},
+ {id:'small-business',model:'business',title:'Small business',emoji:'🏪',description:'Manage customer profiles, inventory, invoices, staff and business settings.',roles:{customer:'Customer',employee:'Employee',owner:'Business Owner'},cases:[
+  {title:'Customer views their own invoice',outcome:'ALLOW',note:'Customers can access their own billing records.'},
+  {title:'Customer edits stock quantities',outcome:'DENY',note:'Inventory is an internal business resource.'},
+  {title:'Employee updates product stock',outcome:'ALLOW',note:'Operational staff can manage inventory.'},
+  {title:'Employee views owner payroll records',outcome:'DENY',note:'Sensitive finance data is restricted.'}
+ ]},
+ {id:'college-event',model:'business',title:'College event',emoji:'🎟️',description:'Manage attendee tickets, check-in, event details, volunteers and refunds.',roles:{customer:'Attendee',employee:'Event Staff / Volunteer',owner:'Event Organiser'},cases:[
+  {title:'Attendee opens their own ticket QR',outcome:'ALLOW',note:'Attendees need their own entry pass.'},
+  {title:'Attendee downloads the full attendee list',outcome:'DENY',note:'Other attendees’ details are private.'},
+  {title:'Volunteer checks in an attendee',outcome:'ALLOW',note:'Door staff can validate and check in tickets.'},
+  {title:'Volunteer changes event payout settings',outcome:'DENY',note:'Financial settings belong to the organiser.'}
+ ]},
+ {id:'marks-grades',model:'organisation',title:'Marks & grades',emoji:'📝',description:'Protect exam results, class gradebooks, re-evaluation requests and teacher access.',roles:{student:'Student',teacher:'Teacher / Faculty'},cases:[
+  {title:'Student views their own marks',outcome:'ALLOW',note:'Students can see their published results.'},
+  {title:'Student views a classmate’s marks',outcome:'DENY',note:'Grades are private to each student.'},
+  {title:'Student edits their own marks',outcome:'DENY',note:'Only authorised academic staff can change grades.'},
+  {title:'Teacher updates marks for an assigned class',outcome:'ALLOW',note:'Teachers can manage their assigned gradebook.'}
+ ]},
+ {id:'attendance',model:'organisation',title:'Attendance management',emoji:'📅',description:'Set boundaries for student attendance, class registers and correction requests.',roles:{student:'Student',teacher:'Teacher / Class Staff'},cases:[
+  {title:'Student views their own attendance',outcome:'ALLOW',note:'Students can check their attendance record.'},
+  {title:'Student marks themselves present',outcome:'DENY',note:'Students cannot certify their own attendance.'},
+  {title:'Student views another student’s attendance',outcome:'DENY',note:'Attendance information is personal.'},
+  {title:'Teacher updates attendance for an assigned class',outcome:'ALLOW',note:'Teachers can manage their own class register.'}
+ ]},
+ {id:'library',model:'organisation',title:'Library management',emoji:'📚',description:'Manage book catalogue, loans, renewals, member records and library staff actions.',roles:{student:'Student / Member',teacher:'Librarian'},cases:[
+  {title:'Student views their own borrowed books',outcome:'ALLOW',note:'Members can see their own loans.'},
+  {title:'Student views another member’s loan history',outcome:'DENY',note:'Borrowing history is private.'},
+  {title:'Student edits the library catalogue',outcome:'DENY',note:'Only library staff can manage books.'},
+  {title:'Librarian issues and returns books',outcome:'ALLOW',note:'Librarians manage circulation.'}
+ ]},
+ {id:'exam-management',model:'organisation',title:'Exam management',emoji:'📋',description:'Cover exam schedules, admit cards, answer scripts, marks entry and result publishing.',roles:{student:'Student',teacher:'Exam Staff / Faculty'},cases:[
+  {title:'Student downloads their own admit card',outcome:'ALLOW',note:'Students can access their own exam documents.'},
+  {title:'Student changes their final result',outcome:'DENY',note:'Students must not edit official grades.'},
+  {title:'Exam staff uploads marks for an assigned subject',outcome:'ALLOW',note:'Authorised exam staff can submit marks.'},
+  {title:'Teacher opens an unrelated class answer script',outcome:'DENY',note:'Access is restricted to assigned subjects.'}
+ ]},
+ {id:'student-records',model:'organisation',title:'Student records',emoji:'🪪',description:'Secure personal details, enrolment documents, identity information and academic records.',roles:{student:'Student',teacher:'Faculty / Office Staff'},cases:[
+  {title:'Student views their own profile',outcome:'ALLOW',note:'Students can review their own details.'},
+  {title:'Student downloads another student’s ID document',outcome:'DENY',note:'Identity documents must remain private.'},
+  {title:'Student changes their enrolment status',outcome:'DENY',note:'Official enrolment changes need staff approval.'},
+  {title:'Staff views records for assigned students',outcome:'ALLOW',note:'Staff access is limited to their responsibility.'}
+ ]}
+];
+
+const scenarioPresets:Record<ScenarioId,Partial<Record<Role,Permission[]>>> = {
+ 'medical-clinic':{
+  customer:[
+   p('mc-p1','View own patient profile','See your own contact details and patient ID.','Patient profile','Low',true),
+   p('mc-p2','View own appointments','See upcoming and previous appointments linked to you.','Appointments','Low',true),
+   p('mc-p3','View own prescriptions','See prescriptions issued to your account.','Medical records','Medium',true),
+   p('mc-p4','View another patient’s medical file','Open another person’s diagnosis, notes or reports.','Medical records','Critical',false),
+   p('mc-p5','Edit clinical notes or diagnosis','Change official medical information.','Medical records','Critical',false)
+  ],
+  employee:[
+   p('mc-e1','View patient contact details','See the minimum details needed for reception and scheduling.','Patient information','Medium',true),
+   p('mc-e2','Book or reschedule appointments','Manage appointment slots for patients.','Appointments','Medium',true),
+   p('mc-e3','View private diagnosis and prescriptions','Open detailed clinical notes and treatment information.','Medical records','High',false),
+   p('mc-e4','Issue or change prescriptions','Create or modify medication orders.','Clinical actions','Critical',false),
+   p('mc-e5','Change clinic access settings','Grant roles or change security settings.','Administration','Critical',false)
+  ],
+  owner:[
+   p('mc-o1','View patient medical records','Access records needed for authorised clinical or clinic administration work.','Medical records','High',true),
+   p('mc-o2','Update clinical notes','Edit records with an authorised clinical role.','Clinical actions','Critical',true),
+   p('mc-o3','Issue prescriptions','Create or update a prescription for a patient.','Clinical actions','Critical',true),
+   p('mc-o4','Manage staff accounts and access','Grant or remove clinic staff permissions.','Administration','Critical',true),
+   p('mc-o5','View clinic billing reports','Review clinic-level financial summaries.','Finance','High',true)
+  ]
+ },
+ 'restaurant':{
+  customer:[
+   p('rs-c1','Browse menu and prices','View items available for ordering.','Menu','Low',true),
+   p('rs-c2','Place an order','Create an order for your own account.','Orders','Low',true),
+   p('rs-c3','View or cancel own order','Track or cancel an eligible order linked to you.','Orders','Low',true),
+   p('rs-c4','View another customer’s order','Access another diner’s items, address or contact details.','Customer data','High',false),
+   p('rs-c5','Change menu prices','Edit restaurant-wide menu and pricing.','Administration','Critical',false)
+  ],
+  employee:[
+   p('rs-e1','View kitchen order queue','See orders required to prepare and fulfil.','Operations','Medium',true),
+   p('rs-e2','Update order status','Mark an order as preparing, ready or completed.','Operations','Medium',true),
+   p('rs-e3','View limited customer contact details','See delivery or pickup information needed to fulfil an order.','Customer data','Medium',true),
+   p('rs-e4','Issue refunds without approval','Return customer payments without owner authorisation.','Finance','High',false),
+   p('rs-e5','Change payout bank details','Modify the account receiving restaurant funds.','Finance','Critical',false)
+  ],
+  owner:[
+   p('rs-o1','Manage menu and prices','Add items, update descriptions and change prices.','Menu','High',true),
+   p('rs-o2','View all restaurant orders','Review orders for operations and customer support.','Orders','Medium',true),
+   p('rs-o3','Issue customer refunds','Approve or issue refunds under restaurant policy.','Finance','High',true),
+   p('rs-o4','Change payout settings','Manage the restaurant’s payment destination.','Finance','Critical',true),
+   p('rs-o5','Manage staff access','Grant or remove employee permissions.','Administration','Critical',true)
+  ]
+ },
+ 'small-business':{
+  customer:[
+   p('sb-c1','View own profile and invoices','See your own account details and bills.','Customer account','Low',true),
+   p('sb-c2','Update own contact details','Change your phone number or delivery address.','Customer account','Low',true),
+   p('sb-c3','View another customer’s invoices','Open someone else’s billing information.','Customer data','High',false),
+   p('sb-c4','Change product inventory','Edit stock quantities or product listings.','Inventory','Critical',false),
+   p('sb-c5','View own purchase history','See orders associated with your account.','Orders','Low',true)
+  ],
+  employee:[
+   p('sb-e1','View customer details needed for orders','Access limited information needed to serve a customer.','Customer data','Medium',true),
+   p('sb-e2','Update product stock','Record stock received or sold.','Inventory','Medium',true),
+   p('sb-e3','Create and update customer orders','Process orders and update fulfilment status.','Orders','Medium',true),
+   p('sb-e4','View payroll and owner bank details','Access sensitive salary or banking information.','Finance','Critical',false),
+   p('sb-e5','Change owner security settings','Change administrator credentials or role access.','Administration','Critical',false)
+  ],
+  owner:[
+   p('sb-o1','Manage inventory and product catalogue','Add products and control stock levels.','Inventory','High',true),
+   p('sb-o2','View business sales and invoices','Review business-wide sales and billing.','Finance','High',true),
+   p('sb-o3','Manage employee accounts','Create, disable or change staff accounts.','Administration','Critical',true),
+   p('sb-o4','Change business payment settings','Control payout and payment configuration.','Finance','Critical',true),
+   p('sb-o5','View and update customer orders','Resolve order issues and manage records.','Orders','Medium',true)
+  ]
+ },
+ 'college-event':{
+  customer:[
+   p('ce-c1','View own event ticket and QR','Open the entry pass assigned to your registration.','Tickets','Low',true),
+   p('ce-c2','View event schedule and venue','See published event information.','Event information','Low',true),
+   p('ce-c3','Update own attendee profile','Change your own contact details.','Attendee profile','Low',true),
+   p('ce-c4','Download the full attendee list','Access names and contact details of all attendees.','Attendee data','Critical',false),
+   p('ce-c5','Change another attendee’s ticket','Edit someone else’s booking or entry status.','Tickets','High',false)
+  ],
+  employee:[
+   p('ce-e1','Scan and validate tickets','Check whether a ticket is valid at the entry gate.','Check-in','Medium',true),
+   p('ce-e2','Check in registered attendees','Update entry status for event guests.','Check-in','Medium',true),
+   p('ce-e3','View limited attendee details','See details needed to help an attendee at the venue.','Attendee data','Medium',true),
+   p('ce-e4','Export all attendee contact details','Download the complete registration directory.','Attendee data','High',false),
+   p('ce-e5','Change event payout settings','Modify payment destinations or financial settings.','Finance','Critical',false)
+  ],
+  owner:[
+   p('ce-o1','Manage event details and schedule','Update the event page, venue and timings.','Event management','High',true),
+   p('ce-o2','View attendee registrations','Review the attendee list for event operations.','Attendee data','High',true),
+   p('ce-o3','Manage volunteers and staff access','Assign roles to event staff.','Administration','Critical',true),
+   p('ce-o4','Approve ticket refunds','Authorise refunds under the event policy.','Finance','High',true),
+   p('ce-o5','Manage event payment settings','Control ticket revenue and payout configuration.','Finance','Critical',true)
+  ]
+ },
+ 'marks-grades':{
+  student:[
+   p('mg-s1','View own marks and grades','See your published marks and grades.','Academic results','Low',true),
+   p('mg-s2','Download own marks card','Download a result document belonging to you.','Academic results','Low',true),
+   p('mg-s3','Request re-evaluation','Submit a request to review your own result.','Academic requests','Low',true),
+   p('mg-s4','View another student’s marks','Open a classmate’s private results.','Academic results','Critical',false),
+   p('mg-s5','Edit your own marks','Change official marks or grades.','Academic results','Critical',false)
+  ],
+  teacher:[
+   p('mg-t1','View marks for assigned students','Access the gradebook for classes you teach.','Gradebook','Medium',true),
+   p('mg-t2','Enter or update assigned marks','Record grades for students in your assigned classes.','Gradebook','High',true),
+   p('mg-t3','Export assigned class gradebook','Download results for an assigned class.','Gradebook','High',true),
+   p('mg-t4','Change marks in an unrelated class','Edit grades for students outside your assignment.','Gradebook','Critical',false),
+   p('mg-t5','Change student account roles','Grant administrative access to student accounts.','Administration','Critical',false)
+  ]
+ },
+ 'attendance':{
+  student:[
+   p('at-s1','View own attendance summary','See your attendance percentage and class history.','Attendance','Low',true),
+   p('at-s2','Request an attendance correction','Ask a teacher to review a disputed entry.','Attendance requests','Low',true),
+   p('at-s3','Mark yourself present','Directly change your own official attendance.','Attendance','High',false),
+   p('at-s4','View another student’s attendance','Open another student’s attendance record.','Attendance','High',false),
+   p('at-s5','Edit a teacher’s class register','Change the official attendance register.','Attendance','Critical',false)
+  ],
+  teacher:[
+   p('at-t1','View attendance for assigned classes','Open registers for the classes you teach.','Class register','Medium',true),
+   p('at-t2','Mark assigned students present or absent','Record attendance for your own classes.','Class register','Medium',true),
+   p('at-t3','Correct an attendance entry','Fix an incorrect record with a reason.','Class register','High',true),
+   p('at-t4','Edit registers for unrelated classes','Change attendance outside your responsibility.','Class register','Critical',false),
+   p('at-t5','Change student account permissions','Grant access to private student records.','Administration','Critical',false)
+  ]
+ },
+ 'library':{
+  student:[
+   p('lb-s1','Search the book catalogue','Browse titles and availability.','Catalogue','Low',true),
+   p('lb-s2','View own loans and due dates','See books currently borrowed by you.','My loans','Low',true),
+   p('lb-s3','Renew your own eligible books','Extend a loan when library rules allow it.','My loans','Low',true),
+   p('lb-s4','View another member’s borrowing history','Open someone else’s loan record.','Member privacy','High',false),
+   p('lb-s5','Edit catalogue or member records','Change official library data.','Administration','Critical',false)
+  ],
+  teacher:[
+   p('lb-t1','Issue and return library books','Manage book circulation for members.','Circulation','Medium',true),
+   p('lb-t2','Update catalogue details','Add books and correct catalogue information.','Catalogue','Medium',true),
+   p('lb-t3','View member loan status','See information needed to manage library loans.','Member records','Medium',true),
+   p('lb-t4','Change student academic marks','Access or edit academic results unrelated to library work.','Academic records','Critical',false),
+   p('lb-t5','Export all member contact details','Download the entire member directory.','Member privacy','High',false)
+  ]
+ },
+ 'exam-management':{
+  student:[
+   p('ex-s1','View exam timetable','See exams assigned to your course.','Exam information','Low',true),
+   p('ex-s2','Download own admit card','Access your own examination entry document.','Exam documents','Low',true),
+   p('ex-s3','View own published results','See your own results after release.','Exam results','Low',true),
+   p('ex-s4','View another student’s answer script','Open another student’s examination work.','Exam records','Critical',false),
+   p('ex-s5','Change your final result','Edit official marks or result status.','Exam results','Critical',false)
+  ],
+  teacher:[
+   p('ex-t1','View assigned exam roster','See students registered for your assigned exams.','Exam operations','Medium',true),
+   p('ex-t2','Upload marks for assigned subjects','Submit marks for the subjects you are responsible for.','Exam results','High',true),
+   p('ex-t3','Review re-evaluation requests','Review student requests assigned to you.','Exam operations','Medium',true),
+   p('ex-t4','Edit results without approval','Change final published results without the required review.','Exam results','Critical',false),
+   p('ex-t5','Access unrelated answer scripts','Open exam scripts outside your assigned subjects.','Exam records','Critical',false)
+  ]
+ },
+ 'student-records':{
+  student:[
+   p('sr-s1','View own student profile','See your own contact, course and enrolment information.','Student profile','Low',true),
+   p('sr-s2','Update permitted contact details','Change your phone number or address.','Student profile','Low',true),
+   p('sr-s3','Download own submitted documents','Access documents you submitted yourself.','My documents','Low',true),
+   p('sr-s4','View another student’s ID documents','Open another student’s identity files.','Student privacy','Critical',false),
+   p('sr-s5','Change official enrolment status','Alter your own course or admission status.','Enrolment','Critical',false)
+  ],
+  teacher:[
+   p('sr-t1','View assigned students’ profiles','See basic student information for your assigned classes.','Student records','Medium',true),
+   p('sr-t2','Add academic remarks for assigned students','Record relevant academic comments.','Student records','Medium',true),
+   p('sr-t3','View private identity documents','Access sensitive identity documents without an assigned need.','Student privacy','High',false),
+   p('sr-t4','Change admission or enrolment status','Modify official student enrolment.','Administration','Critical',false),
+   p('sr-t5','View records outside assigned classes','Open student files beyond your authorised group.','Student privacy','High',false)
+  ]
+ }
+};
+
+function getScenarioLists(id:ScenarioId):Record<Role,Permission[]>{
+ const preset=scenarioPresets[id];
+ return {
+  customer:structuredClone(preset.customer??templates.customer),
+  employee:structuredClone(preset.employee??templates.employee),
+  owner:structuredClone(preset.owner??templates.owner),
+  student:structuredClone(preset.student??templates.student),
+  teacher:structuredClone(preset.teacher??templates.teacher)
+ };
+}
+
 const riskPoints:Record<Level,number>={Low:8,Medium:22,High:48,Critical:75};
 // A fresh storage namespace keeps this website-based test workspace separate from older prototypes.
 const key='cantheyseeit-test1-websites-v2';
