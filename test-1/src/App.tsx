@@ -8,7 +8,7 @@ type Level = 'Low' | 'Medium' | 'High' | 'Critical';
 type Permission = { id:string; title:string; description:string; group:string; risk:Level; enabled:boolean; custom?:boolean };
 type EventItem = { id:string; time:string; title:string; detail:string; tone:'safe'|'warning'|'danger'|'neutral'; sample?:boolean };
 type SourceFile = { path:string; size:number; content:string };
-type SiteProfile = { id:string; name:string; url:string; kind?:'website'|'source'; sourceFiles?:{path:string;size:number}[]; lists:Record<Role,Permission[]>; events:EventItem[]; model:Model|null; role:Role|null };
+type SiteProfile = { id:string; name:string; url:string; kind?:'website'|'source'; sourceFiles?:{path:string;size:number}[]; scenario?:ScenarioId|null; lists:Record<Role,Permission[]>; events:EventItem[]; model:Model|null; role:Role|null };
 type ScenarioId = 'medical-clinic'|'restaurant'|'small-business'|'college-event'|'marks-grades'|'attendance'|'library'|'exam-management'|'student-records';
 type ScenarioCase = { title:string; outcome:'ALLOW'|'DENY'; note:string };
 type ScenarioDefinition = { id:ScenarioId; model:Model; title:string; emoji:string; description:string; roles:Partial<Record<Role,string>>; cases:ScenarioCase[] };
@@ -340,6 +340,7 @@ function band(n:number):Level{return n>=60?'Critical':n>=38?'High':n>=18?'Medium
 export default function App(){
  const [model,setModel]=useState<Model|null>(null);
  const [role,setRole]=useState<Role|null>(null);
+ const [scenarioId,setScenarioId]=useState<ScenarioId|null>(null);
  const [lists,setLists]=useState<Record<Role,Permission[]>>(()=>structuredClone(templates));
  const [events,setEvents]=useState<EventItem[]>([]);
  const [sites,setSites]=useState<SiteProfile[]>([]);
@@ -354,7 +355,7 @@ export default function App(){
  const sourceFolderRef=useRef<HTMLInputElement>(null);
  const [authorized,setAuthorized]=useState(false);
  const [isDragging,setIsDragging]=useState(false);
- const [page,setPage]=useState<'model'|'targets'|'setup'|'dashboard'>('model');
+ const [page,setPage]=useState<'model'|'scenario'|'targets'|'setup'|'dashboard'>('model');
  const [search,setSearch]=useState('');
  const [filter,setFilter]=useState('All');
  const [add,setAdd]=useState(false);
@@ -377,6 +378,7 @@ export default function App(){
      setEvents(active.events??[]);
      setModel(active.model??null);
      setRole(active.role??null);
+     setScenarioId(active.scenario??null);
      if(active.kind==='source'){try{setSourceFiles(await readSourceBundle(active.id))}catch{setSourceFiles([])}}
     }
    }
@@ -386,15 +388,17 @@ export default function App(){
  useEffect(()=>{if(hydrated)localStorage.setItem(key,JSON.stringify({sites,activeSiteId}))},[sites,activeSiteId,hydrated]);
  useEffect(()=>{
   if(!hydrated||!activeSiteId)return;
-  setSites(previous=>previous.map(site=>site.id===activeSiteId?{...site,lists,events,model,role}:site));
- },[lists,events,model,role,activeSiteId,hydrated]);
+  setSites(previous=>previous.map(site=>site.id===activeSiteId?{...site,lists,events,model,role,scenario:scenarioId}:site));
+ },[lists,events,model,role,scenarioId,activeSiteId,hydrated]);
  useEffect(()=>{if(!toast)return;const t=window.setTimeout(()=>setToast(''),2200);return()=>window.clearTimeout(t)},[toast]);
  const activeSite=sites.find(site=>site.id===activeSiteId)??null;
- const selected=role&&model?roleData[model].find(x=>x.id===role):null;
+ const selectedBase=role&&model?roleData[model].find(x=>x.id===role):null;
+ const selectedScenario=scenarios.find(item=>item.id===scenarioId)??null;
+ const selected=selectedBase?{...selectedBase,name:selectedScenario?.roles[role!]??selectedBase.name}:null;
  const current=role?lists[role]:[];
  const groups=['All',...Array.from(new Set(current.map(x=>x.group)))];
  const shown=current.filter(x=>(filter==='All'||x.group===filter)&&`${x.title} ${x.description}`.toLowerCase().includes(search.toLowerCase()));
- const all=Object.values(lists).flat(),enabled=all.filter(x=>x.enabled),risk=score(enabled);
+ const all=model?roleData[model].flatMap(item=>lists[item.id]):Object.values(lists).flat(),enabled=all.filter(x=>x.enabled),risk=score(enabled);
  const addEvent=(title:string,detail:string,tone:EventItem['tone']='neutral',sample=false)=>setEvents(v=>[{id:id(),time:time(),title,detail,tone,sample},...v].slice(0,60));
  function changePermission(item:Permission){if(!role||!selected)return;const next=!item.enabled;setLists(v=>({...v,[role]:v[role].map(x=>x.id===item.id?{...x,enabled:next}:x)}));addEvent(`${next?'Permission granted':'Permission removed'}: ${item.title}`,`${selected.name} · ${item.description}`,next&&(item.risk==='High'||item.risk==='Critical')?'warning':'safe');setToast(next?'Permission granted':'Permission removed')}
  function addCustom(){if(!role||!title.trim())return;const item:Permission={id:`custom-${id()}`,title:title.trim(),description:desc.trim()||'Custom permission added by an administrator.',group:'Custom permissions',risk:level,enabled:true,custom:true};setLists(v=>({...v,[role]:[...v[role],item]}));addEvent(`Custom permission added: ${item.title}`,`${selected?.name} · Risk marked ${level}`,level==='High'||level==='Critical'?'warning':'neutral');setTitle('');setDesc('');setLevel('Medium');setAdd(false);setToast('Permission added')}
@@ -419,14 +423,15 @@ export default function App(){
   if(inputMode==='website'&&!url){setToast('Enter a valid website address');return}
   if(inputMode==='source'&&!sourceFiles.length){setToast('Add a ZIP, folder or code files first');return}
   const fallbackName=inputMode==='website'?new URL(url).hostname:'Uploaded source project';
-  const site:SiteProfile={id:`site-${id()}`,name:siteNameInput.trim()||fallbackName,url,kind:inputMode,sourceFiles:inputMode==='source'?sourceFiles.map(({path,size})=>({path,size})):[],lists:structuredClone(templates),events:[],model,role:null};
+  const site:SiteProfile={id:`site-${id()}`,name:siteNameInput.trim()||fallbackName,url,kind:inputMode,sourceFiles:inputMode==='source'?sourceFiles.map(({path,size})=>({path,size})):[],scenario:scenarioId,lists:structuredClone(lists),events:[],model,role:null};
   setSites(previous=>[...previous,site]);setActiveSiteId(site.id);
-  setLists(structuredClone(templates));setEvents([]);setRole(null);
+  setLists(structuredClone(lists));setEvents([]);setRole(null);
   if(inputMode==='source'){void saveSourceBundle(site.id,sourceFiles).catch(()=>setToast('Could not save code files in this browser'));}
   setSourceFiles([]);setSiteNameInput('');setSiteUrlInput('');setAuthorized(false);setPage('setup');setToast(inputMode==='source'?'Source code added — configure its permissions':'Website added — configure its permissions');
  }
- function startNewTarget(){setActiveSiteId('');setSiteNameInput('');setSiteUrlInput('');setSourceFiles([]);setSourceError('');setAuthorized(false);setPage(model?'targets':'model')}
-  function chooseModel(next:Model){setActiveSiteId('');setModel(next);setRole(null);setSiteNameInput('');setSiteUrlInput('');setSourceFiles([]);setSourceError('');setAuthorized(false);setPage('targets')}
+ function startNewTarget(){setActiveSiteId('');setSiteNameInput('');setSiteUrlInput('');setSourceFiles([]);setSourceError('');setAuthorized(false);setScenarioId(null);setPage(model?'scenario':'model')}
+  function chooseModel(next:Model){setActiveSiteId('');setModel(next);setRole(null);setScenarioId(null);setLists(structuredClone(templates));setSiteNameInput('');setSiteUrlInput('');setSourceFiles([]);setSourceError('');setAuthorized(false);setPage('scenario')}
+  function chooseScenario(next:ScenarioId){const definition=scenarios.find(item=>item.id===next);if(!definition||definition.model!==model)return;setScenarioId(next);setLists(getScenarioLists(next));setRole(null);setPage('targets');setToast(`${definition.title} test cases loaded`)}
   async function processSourceFiles(items:{file:File;path:string}[]){
   setIsLoadingSource(true);setSourceError('');
   try{
@@ -484,12 +489,12 @@ export default function App(){
    else setToast('Drop a website link from your browser address bar, not a folder or file')
   }
   function selectTarget(site:SiteProfile){
-  setActiveSiteId(site.id);setLists(site.lists??structuredClone(templates));setEvents(site.events??[]);setModel(site.model??null);setRole(site.role??null);setPage('setup');if(site.kind==='source'){void readSourceBundle(site.id).then(setSourceFiles).catch(()=>setSourceFiles([]))}else setSourceFiles([]);setToast(`Switched to ${site.name}`);
+  setActiveSiteId(site.id);setLists(site.lists??structuredClone(templates));setEvents(site.events??[]);setModel(site.model??null);setRole(site.role??null);setScenarioId(site.scenario??null);setPage('setup');if(site.kind==='source'){void readSourceBundle(site.id).then(setSourceFiles).catch(()=>setSourceFiles([]))}else setSourceFiles([]);setToast(`Switched to ${site.name}`);
  }
  function removeTarget(site:SiteProfile){
   if(!window.confirm(`Remove ${site.name} and its locally saved permission setup?`))return;
   const remaining=sites.filter(item=>item.id!==site.id);setSites(remaining);if(site.kind==='source')void deleteSourceBundle(site.id).catch(()=>{});
-  if(activeSiteId===site.id){setActiveSiteId('');setLists(structuredClone(templates));setEvents([]);setModel(null);setRole(null);setPage('model')}
+  if(activeSiteId===site.id){setActiveSiteId('');setLists(structuredClone(templates));setEvents([]);setModel(null);setRole(null);setScenarioId(null);setPage('model')}
   setToast('Website removed from this browser');
  }
  return <div className="app"><header className="top"><div className="brand"><span className="brand-icon"><ShieldCheck size={21}/></span><span><b>CanTheySeeIt?</b><small>Simple access control</small></span></div><nav><button className={page==='model'?'active':''} onClick={()=>setPage('model')}><Building2 size={16}/> Model</button><button className={page==='targets'?'active':''} onClick={startNewTarget}><Globe size={16}/> Project</button><button className={page==='setup'?'active':''} onClick={()=>activeSiteId?setPage('setup'):setPage('model')}><SlidersHorizontal size={16}/> Permissions</button><button className={page==='dashboard'?'active':''} onClick={()=>activeSiteId?setPage('dashboard'):setPage('model')}><LayoutDashboard size={16}/> Dashboard</button></nav><span className="local"><i/>{activeSite?activeSite.name:'No website selected'}</span>{activeSite?.kind!=='source'&&activeSite?.url&&<a className="open-target" href={activeSite.url} target="_blank" rel="noreferrer">Open website <ExternalLink size={12}/></a>}</header>
