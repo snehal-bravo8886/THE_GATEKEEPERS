@@ -89,8 +89,8 @@ export default function App(){
  const [desc,setDesc]=useState('');
  const [level,setLevel]=useState<Level>('Medium');
  const [toast,setToast]=useState('');\n const [hydrated,setHydrated]=useState(false);
- useEffect(()=>{try{const raw=localStorage.getItem(key);if(raw){const v=JSON.parse(raw);if(v.lists)setLists(v.lists);if(v.events)setEvents(v.events);if(v.model)setModel(v.model);if(v.role)setRole(v.role)}}catch{}},[]);
- useEffect(()=>{localStorage.setItem(key,JSON.stringify({lists,events,model,role}))},[lists,events,model,role]);
+ useEffect(()=>{try{const raw=localStorage.getItem(key);if(raw){const v=JSON.parse(raw);if(v.lists)setLists(v.lists);if(v.events)setEvents(v.events);if(v.model)setModel(v.model);if(v.role)setRole(v.role)}}catch{}finally{setHydrated(true)}},[]);
+ useEffect(()=>{if(hydrated)localStorage.setItem(key,JSON.stringify({lists,events,model,role}))},[lists,events,model,role,hydrated]);
  useEffect(()=>{if(!toast)return;const t=window.setTimeout(()=>setToast(''),2200);return()=>window.clearTimeout(t)},[toast]);
  const selected=role&&model?roleData[model].find(x=>x.id===role):null;
  const current=role?lists[role]:[];
