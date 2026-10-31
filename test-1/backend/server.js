@@ -10,7 +10,7 @@ const DIST = resolve(ROOT, 'dist');
 const HOST = process.env.HOST || '127.0.0.1';
 const PORT = Number(process.env.API_PORT || 8787);
 const ALLOW_LOCAL_TARGETS = process.env.ALLOW_LOCAL_TARGETS === '1';
-const MAX_BODY = 15 * 1024 * 1024;
+const MAX_BODY = 28 * 1024 * 1024;
 const MAX_FILES = 250;
 const MAX_SOURCE_BYTES = 12 * 1024 * 1024;
 
@@ -336,7 +336,40 @@ function inspectSource(files) {
       });
     }
 
-    const sqlMatch = /(?:SELECT|UPDATE|DELETE|INSERT)[\s\S]{0,180}(?:\$\{[^}]+\}|'\s*\+\s*(?:req|request)\.)/i.exec(source);
+    // Also recognise simple Node.js HTTP servers that dispatch with pathname checks instead of Express routers.
+    const nativePathPattern = /(?:pathname|url\\.pathname)[^\\n]{0,140}(['"])(\\/api\\/[^'"]+)\\1/gi;
+    let nativeMatch;
+    while ((nativeMatch = nativePathPattern.exec(source)) !== null) {
+      const routePath = nativeMatch[2];
+      const routeStart = source.lastIndexOf('\\n', nativeMatch.index - 1) + 1;
+      const remaining = source.slice(routeStart);
+      const nextDispatch = remaining.slice(1).search(/\\n\\s*(?:if|else\\s+if)\\s*\\([^\\n]*(?:req\\.method|pathname|url\\.pathname)/i);
+      const block = remaining.slice(0, nextDispatch >= 0 ? nextDispatch + 1 : 1900);
+      const contextBefore = source.slice(Math.max(0, routeStart - 220), nativeMatch.index + nativeMatch[0].length);
+      const readsRecord = /\\/(?:orders?|invoices?|profiles?|users?|records?|tickets?)\\//i.test(routePath);
+      const ownershipCheck = /(?:ownerId|userId|customerId|createdBy|\\.user\\.id|req\\.user\\.id)[\\s\\S]{0,100}(?:===|==|!==|!=)|(?:===|==|!==|!=)[\\s\\S]{0,100}(?:ownerId|userId|customerId|createdBy|\\.user\\.id)/i.test(block);
+      if (readsRecord && !ownershipCheck) sourceFinding(findings, path, source, nativeMatch.index, {
+        id: 'POSSIBLE_IDOR',
+        title: 'Record-by-ID route may be missing an ownership check',
+        severity: 'high',
+        category: 'Access control',
+        explanation: 'A native HTTP route appears to dispatch to a user-related record path, but the nearby handler did not show a clear record-owner comparison. This is a heuristic and needs manual verification.',
+        recommendation: 'After loading the record, verify on the server that the authenticated user is allowed to access that specific record. Do not rely only on being logged in.'
+      });
+      const mutating = /req\\.method\\s*===?\\s*['"](?:POST|PUT|PATCH|DELETE)/i.test(contextBefore);
+      const sensitiveWrite = mutating && /\\/(?:admin|products?|users?|settings|payments?|inventory|orders?)\\b/i.test(routePath);
+      const roleGuard = /(?:requireRole|authorize|hasPermission|isAdmin|checkRole|canAccess|assertPermission|role\\s*===|permissions?\\s*\\.|accessControl)/i.test(contextBefore + block);
+      if (sensitiveWrite && !roleGuard) sourceFinding(findings, path, source, nativeMatch.index, {
+        id: 'POSSIBLE_MISSING_ROLE_GUARD',
+        title: 'Sensitive write route may lack a role or permission guard',
+        severity: 'medium',
+        category: 'Access control',
+        explanation: 'A native HTTP route changes business data, but no common role/permission guard was visible in the nearby dispatch block.',
+        recommendation: 'Enforce authorization on the server for every write action. Check both the user role and whether that role can perform this exact operation.'
+      });
+    }
+
+    const sqlMatch = /(?:SELECT|UPDATE|DELETE|INSERT)[\\s\\S]{0,180}(?:\\$\\{[^}]+\\}|'\\s*\\+\\s*(?:req|request)\\.)/i.exec(source);
     if (sqlMatch) sourceFinding(findings, path, source, sqlMatch.index, {
       id: 'POSSIBLE_SQL_INJECTION',
       title: 'SQL query may be built using string interpolation or concatenation',
