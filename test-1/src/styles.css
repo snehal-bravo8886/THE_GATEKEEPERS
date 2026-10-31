@@ -108,3 +108,23 @@
 .selected-scenario-note small{font-size:8px;letter-spacing:.9px;color:#7798b7;font-weight:700}
 .selected-scenario-note b{font:700 11px Manrope;color:#3a5673;margin-top:3px}
 .selected-scenario-note em{font-size:9px;color:#94a2b0;font-style:normal;margin-top:2px}
+
+/* More transparent configuration risk estimate and dashboard activity timeline */
+.risk-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:2px 0 12px}
+.risk-metrics span{display:flex;flex-direction:column;gap:4px;background:#f7f9fc;border:1px solid #edf1f5;border-radius:9px;padding:10px}
+.risk-metrics b{font:800 17px Manrope;color:#34475d}
+.risk-metrics small{font-size:9px;line-height:1.35;color:#8e9baa}
+.risk-method{border:1px solid #e8edf3;border-radius:9px;padding:10px 12px;margin:0 0 12px}
+.risk-method summary{cursor:pointer;font-size:10px;font-weight:700;color:#557b9f}
+.risk-method p{font-size:9px;line-height:1.55;color:#8795a5;margin:9px 0 0}
+.timeline-tools{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.timeline-tabs{display:flex;align-items:center;gap:4px;padding:4px;background:#f2f5f8;border-radius:9px}
+.timeline-tabs button{border:0;background:transparent;border-radius:7px;padding:7px 10px;color:#8492a2;font:700 9px 'DM Sans';cursor:pointer}
+.timeline-tabs button.selected{background:white;color:#2879c8;box-shadow:0 1px 4px #1b35500e}
+.timeline-tabs button span{display:inline-block;margin-left:4px;background:#e9f1f8;color:#587997;border-radius:10px;padding:2px 5px}
+.timeline .event{position:relative;padding:15px 0}
+.timeline .event:not(:last-of-type)::after{content:'';position:absolute;left:13px;top:42px;bottom:-2px;width:1px;background:#e7edf3}
+.timeline .event-icon{position:relative;z-index:1}
+.timeline .heading{margin-bottom:14px}
+.risk-method summary:hover,.timeline-tabs button:hover{color:#2879c8}
+@media(max-width:650px){.risk-metrics{grid-template-columns:1fr 1fr 1fr;gap:5px}.risk-metrics span{padding:8px 6px}.risk-metrics b{font-size:15px}.risk-metrics small{font-size:8px}.timeline-tools{align-items:stretch;flex-direction:column}.timeline-tools .actions{width:100%}.timeline-tools .actions button{flex:1}}
