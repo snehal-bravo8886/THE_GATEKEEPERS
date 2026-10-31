@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
-import { ShieldCheck, Building2, GraduationCap, UserRound, BriefcaseBusiness, Users, LayoutDashboard, SlidersHorizontal, Plus, Trash2, Check, AlertTriangle, Activity, Search, ArrowRight, RotateCcw, X, LockKeyhole, Clock3 } from 'lucide-react';
+import { ShieldCheck, Building2, GraduationCap, UserRound, BriefcaseBusiness, Users, LayoutDashboard, SlidersHorizontal, Plus, Trash2, Check, AlertTriangle, Activity, Search, ArrowRight, RotateCcw, X, LockKeyhole, Clock3, Globe, ExternalLink } from 'lucide-react';
 
 type Model = 'business' | 'organisation';
 type Role = 'customer' | 'employee' | 'owner' | 'student' | 'teacher';
 type Level = 'Low' | 'Medium' | 'High' | 'Critical';
 type Permission = { id:string; title:string; description:string; group:string; risk:Level; enabled:boolean; custom?:boolean };
 type EventItem = { id:string; time:string; title:string; detail:string; tone:'safe'|'warning'|'danger'|'neutral'; sample?:boolean };
+type SiteProfile = { id:string; name:string; url:string; lists:Record<Role,Permission[]>; events:EventItem[]; model:Model|null; role:Role|null };
 const roleData:Record<Model,{id:Role;name:string;desc:string;icon:any}[]> = {
  business:[
   {id:'customer',name:'Customer',desc:'People who buy or use your services.',icon:UserRound},
@@ -70,7 +71,8 @@ const templates:Record<Role,Permission[]> = {
  ]
 };
 const riskPoints:Record<Level,number>={Low:8,Medium:22,High:48,Critical:75};
-const key='cantheyseeit-test1';
+// A fresh storage namespace keeps this website-based test workspace separate from older prototypes.
+const key='cantheyseeit-test1-websites-v1';
 const time=()=>new Date().toLocaleString([],{dateStyle:'medium',timeStyle:'short'});
 const id=()=>Math.random().toString(36).slice(2,9);
 function score(items:Permission[]){const a=items.filter(x=>x.enabled);return a.length?Math.min(100,Math.round(a.reduce((n,x)=>n+riskPoints[x.risk],0)/a.length)):0}
@@ -81,7 +83,12 @@ export default function App(){
  const [role,setRole]=useState<Role|null>(null);
  const [lists,setLists]=useState<Record<Role,Permission[]>>(()=>structuredClone(templates));
  const [events,setEvents]=useState<EventItem[]>([]);
- const [page,setPage]=useState<'setup'|'dashboard'>('setup');
+ const [sites,setSites]=useState<SiteProfile[]>([]);
+ const [activeSiteId,setActiveSiteId]=useState('');
+ const [siteNameInput,setSiteNameInput]=useState('');
+ const [siteUrlInput,setSiteUrlInput]=useState('');
+ const [authorized,setAuthorized]=useState(false);
+ const [page,setPage]=useState<'targets'|'setup'|'dashboard'>('targets');
  const [search,setSearch]=useState('');
  const [filter,setFilter]=useState('All');
  const [add,setAdd]=useState(false);
@@ -90,9 +97,32 @@ export default function App(){
  const [level,setLevel]=useState<Level>('Medium');
  const [toast,setToast]=useState('');
  const [hydrated,setHydrated]=useState(false);
- useEffect(()=>{try{const raw=localStorage.getItem(key);if(raw){const v=JSON.parse(raw);if(v.lists)setLists(v.lists);if(v.events)setEvents(v.events);if(v.model)setModel(v.model);if(v.role)setRole(v.role)}}catch{}finally{setHydrated(true)}},[]);
- useEffect(()=>{if(hydrated)localStorage.setItem(key,JSON.stringify({lists,events,model,role}))},[lists,events,model,role,hydrated]);
+ useEffect(()=>{
+  try{
+   const raw=localStorage.getItem(key);
+   if(raw){
+    const saved=JSON.parse(raw);
+    const loaded:SiteProfile[]=Array.isArray(saved.sites)?saved.sites:[];
+    setSites(loaded);
+    const active=loaded.find(site=>site.id===saved.activeSiteId)??loaded[0];
+    if(active){
+     setActiveSiteId(active.id);
+     setLists(active.lists??structuredClone(templates));
+     setEvents(active.events??[]);
+     setModel(active.model??null);
+     setRole(active.role??null);
+    }
+   }
+  }catch{ /* Start with a clean workspace if saved data is invalid. */ }
+  finally{setHydrated(true)}
+ },[]);
+ useEffect(()=>{if(hydrated)localStorage.setItem(key,JSON.stringify({sites,activeSiteId}))},[sites,activeSiteId,hydrated]);
+ useEffect(()=>{
+  if(!hydrated||!activeSiteId)return;
+  setSites(previous=>previous.map(site=>site.id===activeSiteId?{...site,lists,events,model,role}:site));
+ },[lists,events,model,role,activeSiteId,hydrated]);
  useEffect(()=>{if(!toast)return;const t=window.setTimeout(()=>setToast(''),2200);return()=>window.clearTimeout(t)},[toast]);
+ const activeSite=sites.find(site=>site.id===activeSiteId)??null;
  const selected=role&&model?roleData[model].find(x=>x.id===role):null;
  const current=role?lists[role]:[];
  const groups=['All',...Array.from(new Set(current.map(x=>x.group)))];
@@ -105,9 +135,50 @@ export default function App(){
  function reset(){if(!role)return;setLists(v=>({...v,[role]:structuredClone(templates[role])}));addEvent('Role permissions reset',`${selected?.name} restored to the starter template`);setToast('Role restored')}
  function sample(){addEvent('Suspicious access attempt (sample)','A student attempted to open another student’s private marks. This is a demonstration event, not a live backend alert.','danger',true);setToast('Sample alert added')}
  const rolesAll=(Object.keys(roleData) as Model[]).flatMap(m=>roleData[m].map(r=>({...r,model:m})));
- return <div className="app"><header className="top"><div className="brand"><span className="brand-icon"><ShieldCheck size={21}/></span><span><b>CanTheySeeIt?</b><small>Simple access control</small></span></div><nav><button className={page==='setup'?'active':''} onClick={()=>setPage('setup')}><SlidersHorizontal size={16}/> Permissions</button><button className={page==='dashboard'?'active':''} onClick={()=>setPage('dashboard')}><LayoutDashboard size={16}/> Dashboard</button></nav><span className="local"><i/> Local workspace</span></header>
- <main><div className="intro"><div><small>TEST 1 · ACCESS MADE SIMPLE</small><h1>{page==='setup'?'Who should be able to do what?':'Your access overview'}</h1><p>{page==='setup'?'Choose your setup, select a role, and switch permissions on or off. No technical knowledge needed.':'A clear picture of configured permissions and the risks they may introduce.'}</p></div>{page==='setup'&&<button className="link" onClick={()=>setPage('dashboard')}>View dashboard <ArrowRight size={15}/></button>}</div>
- {page==='setup'?<>
+ function parsedWebsiteUrl(raw:string):string|null{
+  try{
+   const value=raw.trim();
+   if(!value)return null;
+   const url=new URL(/^https?:\/\//i.test(value)?value:`https://${value}`);
+   if(url.protocol!=='http:'&&url.protocol!=='https:')return null;
+   if(url.username||url.password)return null;
+   return url.toString().replace(/\/$/,'');
+  }catch{return null}
+ }
+ function createTarget(){
+  const url=parsedWebsiteUrl(siteUrlInput);
+  if(!url){setToast('Enter a valid website address');return}
+  if(!authorized){setToast('Please confirm you are allowed to test this website');return}
+  const site:SiteProfile={id:`site-${id()}`,name:siteNameInput.trim()||new URL(url).hostname,url,lists:structuredClone(templates),events:[],model:null,role:null};
+  setSites(previous=>[...previous,site]);
+  setActiveSiteId(site.id);
+  setLists(structuredClone(templates));setEvents([]);setModel(null);setRole(null);
+  setSiteNameInput('');setSiteUrlInput('');setAuthorized(false);setPage('setup');setToast('Website added — configure its permissions');
+ }
+ function selectTarget(site:SiteProfile){
+  setActiveSiteId(site.id);setLists(site.lists??structuredClone(templates));setEvents(site.events??[]);setModel(site.model??null);setRole(site.role??null);setPage('setup');setToast(`Switched to ${site.name}`);
+ }
+ function removeTarget(site:SiteProfile){
+  if(!window.confirm(`Remove ${site.name} and its locally saved permission setup?`))return;
+  const remaining=sites.filter(item=>item.id!==site.id);setSites(remaining);
+  if(activeSiteId===site.id){setActiveSiteId('');setLists(structuredClone(templates));setEvents([]);setModel(null);setRole(null);setPage('targets')}
+  setToast('Website removed from this browser');
+ }
+ return <div className="app"><header className="top"><div className="brand"><span className="brand-icon"><ShieldCheck size={21}/></span><span><b>CanTheySeeIt?</b><small>Simple access control</small></span></div><nav><button className={page==='targets'?'active':''} onClick={()=>setPage('targets')}><Globe size={16}/> Websites</button><button className={page==='setup'?'active':''} onClick={()=>activeSiteId?setPage('setup'):setPage('targets')}><SlidersHorizontal size={16}/> Permissions</button><button className={page==='dashboard'?'active':''} onClick={()=>activeSiteId?setPage('dashboard'):setPage('targets')}><LayoutDashboard size={16}/> Dashboard</button></nav><span className="local"><i/>{activeSite?activeSite.name:'No website selected'}</span></header>
+ <main><div className="intro"><div><small>TEST 1 · ACCESS MADE SIMPLE</small><h1>{page==='targets'?'Which website do you want to review?':page==='setup'?'Who should be able to do what?':'Your access overview'}</h1><p>{page==='targets'?'Add your website address first. Each website gets its own permission settings and activity history.':page==='setup'?'Choose your setup, select a role, and switch permissions on or off. No technical knowledge needed.':'A clear picture of configured permissions and the risks they may introduce.'}</p></div>{page==='setup'&&<button className="link" onClick={()=>setPage('dashboard')}>View dashboard <ArrowRight size={15}/></button>}</div>
+ {page==='targets'?<>
+ <section className="card target-form">
+  <div className="heading"><div><small>STEP 1 · WEBSITE</small><h2>Add a website to review</h2><p>Enter the address of the website you built or are authorised to assess.</p></div><span className="target-mark"><Globe size={21}/></span></div>
+  <div className="target-fields">
+   <label>Website name <span>Optional</span><input value={siteNameInput} onChange={e=>setSiteNameInput(e.target.value)} placeholder="e.g. My Vibe-Coded Store"/></label>
+   <label>Website address<input value={siteUrlInput} onChange={e=>setSiteUrlInput(e.target.value)} placeholder="https://your-website.com" inputMode="url"/><small>Paste the deployed URL or a local address such as http://localhost:3000.</small></label>
+  </div>
+  <label className="authorise"><input type="checkbox" checked={authorized} onChange={e=>setAuthorized(e.target.checked)}/><span><b>I own this website or have explicit permission to test it.</b><small>Only add websites you are authorised to assess.</small></span></label>
+  <div className="target-submit"><button className="blue" onClick={createTarget} disabled={!parsedWebsiteUrl(siteUrlInput)||!authorized}><Plus size={15}/> Add website and continue</button><p>Adding a URL creates a separate workspace. It does not scan or send requests to that website.</p></div>
+ </section>
+ {sites.length>0&&<section className="card"><div className="heading"><div><small>YOUR WORKSPACES</small><h2>Websites added</h2><p>Switch between sites. Each one keeps its own permissions and timeline.</p></div><span className="count">{sites.length} saved</span></div><div className="site-list">{sites.map(site=><div className={site.id===activeSiteId?'site-row current':'site-row'}><span className="site-icon"><Globe size={18}/></span><span className="site-copy"><b>{site.name}</b><small>{site.url}</small></span>{site.id===activeSiteId&&<em>Current</em>}<button className="light" onClick={()=>selectTarget(site)}>Open</button><button className="site-remove" onClick={()=>removeTarget(site)} title="Remove website"><Trash2 size={15}/></button></div>)}</div></section>}
+ <div className="target-note"><AlertTriangle size={17}/><span><b>What this version does:</b> it helps you define and review permission rules for each website. Live website testing, automatic page discovery and real breach detection need a connected verification backend. The risk score shown later is a permissions-based estimate, not a scan result.</span></div>
+ </>:page==='setup'?<>
  <section className="card"><div className="heading"><div><small>STEP 1</small><h2>Choose your model</h2><p>Which type of setup are you managing?</p></div></div><div className="models">{(['business','organisation'] as Model[]).map(m=><button className={model===m?'model chosen':'model'} onClick={()=>{setModel(m);setRole(null)}}><span className="model-icon">{m==='business'?<Building2/>:<GraduationCap/>}</span><span><b>{m==='business'?'Business':'Organisation'}</b><small>{m==='business'?'For a company, shop or service.':'For a school, college or institution.'}</small><em>{m==='business'?'Customers · Employees · Owner':'Students · Teachers'}</em></span>{model===m&&<Check className="check"/>}</button>)}</div></section>
  {model&&<section className="card"><div className="heading"><div><small>STEP 2</small><h2>Choose a category</h2><p>Select whose permissions you want to manage.</p></div><span className="count">{roleData[model].length} categories</span></div><div className="roles">{roleData[model].map(r=>{const Icon=r.icon;return <button className={role===r.id?'role selected':'role'} onClick={()=>{setRole(r.id);setSearch('');setFilter('All')}}><span className="role-icon"><Icon size={19}/></span><b>{r.name}</b><small>{r.desc}</small><em>{lists[r.id].filter(x=>x.enabled).length} of {lists[r.id].length} enabled</em></button>})}</div></section>}
  {role&&selected&&<section className="card"><div className="perm-head"><div><small>STEP 3</small><h2>{selected.name} permissions</h2><p>Turn each permission on or off. The description explains what it means.</p></div><div className="actions"><button className="light" onClick={reset}><RotateCcw size={14}/> Reset role</button><button className="blue" onClick={()=>setAdd(true)}><Plus size={15}/> Add permission</button></div></div><div className="summary"><span><small>Permissions enabled</small><b>{current.filter(x=>x.enabled).length}<i> / {current.length}</i></b></span><span><small>Estimated role risk</small><b className={band(score(current)).toLowerCase()}>{score(current)}% <i>{band(score(current))}</i></b></span><p>Risk is estimated from enabled permissions. It is not a live security scan.</p></div><div className="tools"><label><Search size={15}/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search permissions…"/></label><select value={filter} onChange={e=>setFilter(e.target.value)}>{groups.map(g=><option>{g}</option>)}</select></div><div className="list">{shown.length===0?<p className="empty">No permissions match your search.</p>:shown.map(item=><div className="permission"><span className={item.enabled?'symbol on':'symbol'}>{item.enabled?<Check size={15}/>:<LockKeyhole size={14}/>}</span><div className="permission-copy"><div><b>{item.title}</b><span className={'risk '+item.risk.toLowerCase()}>{item.risk} risk</span>{item.custom&&<span className="custom">Custom</span>}</div><p>{item.description}</p><small>{item.group}</small></div><span className={item.enabled?'allowed':'blocked'}>{item.enabled?'Allowed':'Not allowed'}</span><button className={item.enabled?'switch on':'switch'} role="switch" aria-checked={item.enabled} onClick={()=>changePermission(item)}><i/></button>{item.custom&&<button className="delete" onClick={()=>removeCustom(item)} title="Delete permission"><Trash2 size={15}/></button>}</div>)}</div><div className="tip">ⓘ <span><b>Tip:</b> Give people only the access they need. A student usually needs to view their own marks, not everyone else’s.</span></div></section>}
