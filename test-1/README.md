@@ -40,7 +40,7 @@ Supported inputs include ZIP archives, project folders and common source/config 
 Source files are saved locally in the browser's IndexedDB for each project workspace. They are sent to the local scan backend only after the owner explicitly starts a source-code review. The scanner reads files as text and never executes them.
 
 ## Run locally
-Requires Node.js 18 or newer.
+Requires Node.js 20.19+ or 22.12+ (the current Vite version requirement).
 
 ```bash
 npm install
