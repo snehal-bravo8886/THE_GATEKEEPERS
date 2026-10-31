@@ -1,12 +1,19 @@
 # CanTheySeeIt? — Test 1
 
-Beginner-friendly permission management prototype with separate workspaces for multiple websites.
+Beginner-friendly permission-management prototype for Business and Organisation projects.
 
 ## First-time flow
-1. Choose a model: **Business** or **Organisation**.
-2. Add the website you own or are explicitly authorised to assess. You can drag its link from the browser address bar into the drop area, or paste/type its URL.
-3. Choose a category and manage its permissions.
-4. Review that website's permission summary, estimated risk and activity timeline.
+1. Choose **Business** or **Organisation**.
+2. Choose how to add the project:
+   - **Website link:** paste the website URL or drag the link from your browser.
+   - **Source code:** drag a project folder, a ZIP archive, or multiple source files; alternatively use the file/folder picker.
+3. Select a user category (Customer, Employee, Owner, Student or Teacher) and configure its permissions.
+4. Review the permissions, estimated risk and activity timeline.
+
+## Source-code upload
+Supported inputs include ZIP archives, project folders and common source/config files such as TS/TSX, JS/JSX, HTML, CSS, JSON, Python, Java, SQL, YAML and Markdown. The importer ignores common generated/dependency folders such as `node_modules`, `.git`, `dist`, `build`, `.next`, `coverage` and `vendor`. It currently reads up to 250 supported files, with per-file and total size limits.
+
+Source files are saved locally in the browser's IndexedDB for each project workspace. They are not transmitted to a server by this prototype.
 
 ## Models and roles
 - **Business:** Customer, Employee, Owner
@@ -22,20 +29,8 @@ npm run dev
 
 Open the Vite URL (normally http://localhost:5173).
 
-## Multiple website workspaces
-- Use the **Model** tab to start a new Business or Organisation workspace.
-- Use the **Website** tab to add another website under the selected model.
-- Each saved website keeps its own permission configuration, risk estimate and activity timeline.
-- Use the workspace list to switch between previously added sites.
-
-## Included
-- Plain-language permission presets for each role
-- Grant/revoke permissions and add/remove custom permissions
-- Drag-and-drop website-link input plus paste/type fallback
-- Separate local workspaces for multiple website targets
-- Dashboard with permission counts and a configuration-based risk estimate
-- Activity timeline for permission changes and clearly labelled sample alerts
-- Browser local-storage persistence
+## Multiple project workspaces
+Use the **Model** tab to start a new Business or Organisation project. Use **Website** to add a URL or source-code project. Each workspace has its own role permissions, risk estimate and activity timeline. Switch between existing workspaces from the saved-project list.
 
 ## Important scope and safety notes
-Dragging or entering a URL only creates a workspace for the website. This frontend does **not** crawl the site, send security test requests, discover routes, or inspect its database. Actual live website verification requires a connected backend, suitable test fixtures/credentials, and explicit authorisation to assess the target. Risk is a heuristic based on configured permissions, not a calibrated score. Real breach detection requires verified backend or monitoring events. The sample alert is not a real breach.
+Adding a URL only registers the target; it does not crawl the site or send security requests. Uploading source code only stores the files locally in this browser. Neither action performs a security scan yet. Actual static-code analysis or live website verification requires a connected backend, suitable test fixtures/credentials, and explicit authorisation to assess the target. The displayed risk percentage is a heuristic based on configured permissions, not a calibrated score. Real breach detection requires verified backend or monitoring events. Sample alerts are demonstrations, not real breaches.
