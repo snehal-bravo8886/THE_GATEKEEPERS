@@ -37,7 +37,7 @@ The dashboard timeline records workspace creation, permission grants/removals, c
 ## Source-code import
 Supported inputs include ZIP archives, project folders and common source/config files such as TS/TSX, JS/JSX, HTML, CSS, JSON, Python, Java, SQL, YAML, Markdown and plain-text code snippets. The importer skips common generated/dependency folders such as `node_modules`, `.git`, `dist`, `build`, `.next`, `coverage` and `vendor`. It currently imports up to 250 supported files, with per-file and total size limits.
 
-Source files are saved locally in the browser's IndexedDB for each project workspace. They are not transmitted to a server by this prototype.
+Source files are saved locally in the browser's IndexedDB for each project workspace. They are sent to the local scan backend only after the owner explicitly starts a source-code review. The scanner reads files as text and never executes them.
 
 ## Run locally
 Requires Node.js 18 or newer.
@@ -47,10 +47,29 @@ npm install
 npm run dev
 ```
 
-Open the Vite URL (normally http://localhost:5173).
+Open the Vite URL (normally http://127.0.0.1:5173). The dev command starts both the React frontend and the local API scan engine. Keep the terminal open while using the app. The local API is available at http://127.0.0.1:8787/api/health.
+
+## Run a real first-pass scan
+
+1. Add a website URL or import your source-code ZIP/folder.
+2. Configure the roles and permissions for the project.
+3. Open the Dashboard.
+4. In **Run a security check**, confirm that you own the project or have permission to assess it.
+5. Choose **Check website now** or **Analyse source code now**.
+6. Review the measured checks, findings, evidence locations and suggested fixes.
+
+### What the backend checks
+- **Website URL:** makes a bounded homepage request and reviews the HTTP status, HTTPS, CSP, HSTS, clickjacking protection, MIME-sniffing protection, Referrer-Policy, Permissions-Policy, observed cookie flags and technology-banner disclosure. It does not crawl pages, log in, submit forms or test protected endpoints.
+- **Source code:** reads imported files as text and looks for heuristic patterns related to IDOR-style record routes, missing role guards on sensitive write routes, client-controlled checkout prices and possible SQL string construction. These are review hints, not confirmed vulnerabilities.
+- **Permission matrix:** checks enabled non-owner grants for descriptions suggesting broad access to other users' records or sensitive business settings.
+
+Results are returned to the dashboard for the current session; the backend does not store uploaded source files or scan history. The local development server binds to 127.0.0.1. Local/private website targets are enabled only by the bundled development launcher for local demos. Do not expose this unauthenticated development scanner to the public internet.
+
+### Current limitations
+This is a first-pass MVP. A website scan checks only the supplied homepage response; it does not dynamically test role-specific API behaviour. Static source findings are rule-based and may produce false positives or miss vulnerabilities. To verify real customer/employee/owner permissions end-to-end, the next integration needs test accounts and explicit API endpoint mappings for each role. A clean result is not proof that the application is secure.
 
 ## Multiple workspaces
 Use the **Model** tab to start a new Business or Organisation project, select its scenario, then use the **Project** tab to add a website link or source code. Each workspace keeps its own selected scenario, editable role permissions, event timeline and incident-triggered risk indicator.
 
 ## Important scope and safety notes
-The ALLOW/DENY examples are scenario templates, not results from a live test. Adding a URL only registers the target; it does not crawl the site or send security requests. Uploading source code only stores the files locally in this browser. Neither action performs a security scan yet. Actual static-code analysis or live website verification requires a connected backend, suitable test fixtures/credentials, and explicit authorisation to assess the target. Real breach detection requires verified backend or monitoring events.
+The ALLOW/DENY examples are scenario templates, not results from a live role-by-role API test. Website and source-code scans are now available through the local backend, but their coverage is limited to the checks described above. Real role-by-role API verification requires test accounts and explicit endpoint mappings. Real breach detection requires verified backend or monitoring events.
