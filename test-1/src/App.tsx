@@ -161,7 +161,7 @@ export default function App(){
   function handleWebsiteDrop(event:DragEvent<HTMLDivElement>){
    event.preventDefault();setIsDragging(false);
    const raw=event.dataTransfer.getData('text/uri-list')||event.dataTransfer.getData('text/plain')||event.dataTransfer.getData('text');
-   const candidate=raw.split(/\\r?\\n/).map(value=>value.trim()).find(value=>value&&!value.startsWith('#'));
+   const candidate=raw.split(String.fromCharCode(10)).map(value=>value.trim()).find(value=>value&&!value.startsWith('#'));
    if(candidate){setSiteUrlInput(candidate);setToast('Website link added — review it before continuing')}
    else setToast('Drop a website link from your browser address bar, not a folder or file')
   }
