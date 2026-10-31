@@ -1,0 +1,14 @@
+{
+  "name": "cantheyseeit-qa",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test unit/*.test.mjs",
+    "test:watch": "node --test --watch unit/*.test.mjs",
+    "test:integration": "vitest run --config vitest.config.mjs",
+    "test:all": "npm run test && npm run test:integration"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.4"
+  }
+}
