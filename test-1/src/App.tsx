@@ -157,7 +157,7 @@ export default function App(){
   setLists(structuredClone(templates));setEvents([]);setRole(null);
   setSiteNameInput('');setSiteUrlInput('');setAuthorized(false);setPage('setup');setToast('Website added — configure its permissions');
  }
- function chooseModel(next:Model){setActiveSiteId('');setModel(next);setRole(null);setPage('targets')}
+ function chooseModel(next:Model){setActiveSiteId('');setModel(next);setRole(null);setSiteNameInput('');setSiteUrlInput('');setAuthorized(false);setPage('targets')}
   function handleWebsiteDrop(event:DragEvent<HTMLElement>){
    event.preventDefault();setIsDragging(false);
    const raw=event.dataTransfer.getData('text/uri-list')||event.dataTransfer.getData('text/plain')||event.dataTransfer.getData('text');
