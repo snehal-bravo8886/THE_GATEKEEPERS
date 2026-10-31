@@ -115,7 +115,7 @@ export default function App(){
  const [level,setLevel]=useState<Level>('Medium');
  const [toast,setToast]=useState('');
  const [hydrated,setHydrated]=useState(false);
- useEffect(()=>{
+ useEffect(()=>{void (async()=>{
   try{
    const raw=localStorage.getItem(key);
    if(raw){
@@ -129,11 +129,12 @@ export default function App(){
      setEvents(active.events??[]);
      setModel(active.model??null);
      setRole(active.role??null);
+     if(active.kind==='source'){try{setSourceFiles(await readSourceBundle(active.id))}catch{setSourceFiles([])}}
     }
    }
   }catch{ /* Start with a clean workspace if saved data is invalid. */ }
   finally{setHydrated(true)}
- },[]);
+ })()},[]);
  useEffect(()=>{if(hydrated)localStorage.setItem(key,JSON.stringify({sites,activeSiteId}))},[sites,activeSiteId,hydrated]);
  useEffect(()=>{
   if(!hydrated||!activeSiteId)return;
@@ -164,18 +165,60 @@ export default function App(){
   }catch{return null}
  }
  function createTarget(){
-  const url=parsedWebsiteUrl(siteUrlInput);
   if(!model){setPage('model');setToast('Choose Business or Organisation first');return}
-   if(!url){setToast('Enter a valid website address');return}
-  if(!authorized){setToast('Please confirm you are allowed to test this website');return}
-  const site:SiteProfile={id:`site-${id()}`,name:siteNameInput.trim()||new URL(url).hostname,url,lists:structuredClone(templates),events:[],model,role:null};
-  setSites(previous=>[...previous,site]);
-  setActiveSiteId(site.id);
+  if(!authorized){setToast(inputMode==='source'?'Confirm you have permission to review this code':'Confirm you have permission to review this website');return}
+  const url=inputMode==='website'?parsedWebsiteUrl(siteUrlInput):'';
+  if(inputMode==='website'&&!url){setToast('Enter a valid website address');return}
+  if(inputMode==='source'&&!sourceFiles.length){setToast('Add a ZIP, folder or code files first');return}
+  const fallbackName=inputMode==='website'?new URL(url).hostname:'Uploaded source project';
+  const site:SiteProfile={id:`site-${id()}`,name:siteNameInput.trim()||fallbackName,url,kind:inputMode,sourceFiles:inputMode==='source'?sourceFiles.map(({path,size})=>({path,size})):[],lists:structuredClone(templates),events:[],model,role:null};
+  setSites(previous=>[...previous,site]);setActiveSiteId(site.id);
   setLists(structuredClone(templates));setEvents([]);setRole(null);
-  setSiteNameInput('');setSiteUrlInput('');setAuthorized(false);setPage('setup');setToast('Website added — configure its permissions');
+  if(inputMode==='source'){void saveSourceBundle(site.id,sourceFiles).catch(()=>setToast('Could not save code files in this browser'));}
+  setSourceFiles([]);setSiteNameInput('');setSiteUrlInput('');setAuthorized(false);setPage('setup');setToast(inputMode==='source'?'Source code added — configure its permissions':'Website added — configure its permissions');
  }
- function chooseModel(next:Model){setActiveSiteId('');setModel(next);setRole(null);setSiteNameInput('');setSiteUrlInput('');setAuthorized(false);setPage('targets')}
-  function handleWebsiteDrop(event:DragEvent<HTMLElement>){
+ function chooseModel(next:Model){setActiveSiteId('');setModel(next);setRole(null);setSiteNameInput('');setSiteUrlInput('');setSourceFiles([]);setSourceError('');setAuthorized(false);setPage('targets')}
+  async function processSourceFiles(items:{file:File;path:string}[]){
+  setIsLoadingSource(true);setSourceError('');
+  try{
+   const collected:SourceFile[]=[];let total=0;const maxTotal=12*1024*1024;const maxFile=2*1024*1024;const maxFiles=250;
+   for(const item of items){
+    const filePath=item.path.replace(/\\\\/g,'/');
+    if(filePath.toLowerCase().endsWith('.zip')){
+     const zip=await JSZip.loadAsync(item.file);
+     for(const [zipPath,entry] of Object.entries(zip.files)){
+      if(entry.dir||!isCodePath(zipPath)||collected.length>=maxFiles)continue;
+      const content=await entry.async('string');const size=new Blob([content]).size;
+      if(size>maxFile||total+size>maxTotal)continue;
+      collected.push({path:zipPath,size,content});total+=size;
+     }
+    }else if(isCodePath(filePath)&&item.file.size<=maxFile&&total+item.file.size<=maxTotal&&collected.length<maxFiles){
+     const content=await item.file.text();collected.push({path:filePath,size:item.file.size,content});total+=item.file.size;
+    }
+   }
+   if(!collected.length)throw new Error('No supported source files found. Add a ZIP, project folder or files such as .tsx, .ts, .jsx, .js, .html, .css or .py.');
+   setSourceFiles(previous=>{const map=new Map(previous.map(file=>[file.path,file]));for(const file of collected)map.set(file.path,file);return Array.from(map.values())});
+   setToast(`${collected.length} source files loaded`);
+  }catch(error){setSourceError(error instanceof Error?error.message:'Could not read those files')}
+  finally{setIsLoadingSource(false)}
+ }
+ function handleSourceSelection(event:ChangeEvent<HTMLInputElement>){
+  const files=Array.from(event.target.files??[]).map(file=>({file,path:(file as File&{webkitRelativePath?:string}).webkitRelativePath||file.name}));
+  if(files.length)void processSourceFiles(files);event.target.value='';
+ }
+ async function collectDroppedEntries(event:DragEvent<HTMLElement>){
+  const items=Array.from(event.dataTransfer.items) as (DataTransferItem&{webkitGetAsEntry?:()=>any})[];
+  const entries=items.map(item=>item.webkitGetAsEntry?.()).filter(Boolean);
+  if(!entries.length)return Array.from(event.dataTransfer.files).map(file=>({file,path:file.name}));
+  const result:{file:File;path:string}[]=[];
+  const walk=async(entry:any,prefix=''):Promise<void>=>{
+   if(entry.isFile){const file:File=await new Promise((resolve,reject)=>entry.file(resolve,reject));result.push({file,path:prefix+file.name});return}
+   if(entry.isDirectory){const reader=entry.createReader();while(true){const batch:any[]=await new Promise((resolve,reject)=>reader.readEntries(resolve,reject));if(!batch.length)break;for(const child of batch)await walk(child,prefix+entry.name+'/')}}
+  };
+  for(const entry of entries)await walk(entry,'');return result;
+ }
+ async function handleSourceDrop(event:DragEvent<HTMLElement>){event.preventDefault();setIsDragging(false);const files=await collectDroppedEntries(event);if(files.length)await processSourceFiles(files);else setToast('Drop a code folder, ZIP or source files here')}
+ function handleWebsiteDrop(event:DragEvent<HTMLElement>){
    event.preventDefault();setIsDragging(false);
    const raw=event.dataTransfer.getData('text/uri-list')||event.dataTransfer.getData('text/plain')||event.dataTransfer.getData('text');
    const candidate=raw.split(String.fromCharCode(10)).map(value=>value.trim()).find(value=>value&&!value.startsWith('#'));
@@ -183,15 +226,15 @@ export default function App(){
    else setToast('Drop a website link from your browser address bar, not a folder or file')
   }
   function selectTarget(site:SiteProfile){
-  setActiveSiteId(site.id);setLists(site.lists??structuredClone(templates));setEvents(site.events??[]);setModel(site.model??null);setRole(site.role??null);setPage('setup');setToast(`Switched to ${site.name}`);
+  setActiveSiteId(site.id);setLists(site.lists??structuredClone(templates));setEvents(site.events??[]);setModel(site.model??null);setRole(site.role??null);setPage('setup');if(site.kind==='source'){void readSourceBundle(site.id).then(setSourceFiles).catch(()=>setSourceFiles([]))}else setSourceFiles([]);setToast(`Switched to ${site.name}`);
  }
  function removeTarget(site:SiteProfile){
   if(!window.confirm(`Remove ${site.name} and its locally saved permission setup?`))return;
-  const remaining=sites.filter(item=>item.id!==site.id);setSites(remaining);
+  const remaining=sites.filter(item=>item.id!==site.id);setSites(remaining);if(site.kind==='source')void deleteSourceBundle(site.id).catch(()=>{});
   if(activeSiteId===site.id){setActiveSiteId('');setLists(structuredClone(templates));setEvents([]);setModel(null);setRole(null);setPage('model')}
   setToast('Website removed from this browser');
  }
- return <div className="app"><header className="top"><div className="brand"><span className="brand-icon"><ShieldCheck size={21}/></span><span><b>CanTheySeeIt?</b><small>Simple access control</small></span></div><nav><button className={page==='model'?'active':''} onClick={()=>setPage('model')}><Building2 size={16}/> Model</button><button className={page==='targets'?'active':''} onClick={()=>model?setPage('targets'):setPage('model')}><Globe size={16}/> Website</button><button className={page==='setup'?'active':''} onClick={()=>activeSiteId?setPage('setup'):setPage('model')}><SlidersHorizontal size={16}/> Permissions</button><button className={page==='dashboard'?'active':''} onClick={()=>activeSiteId?setPage('dashboard'):setPage('model')}><LayoutDashboard size={16}/> Dashboard</button></nav><span className="local"><i/>{activeSite?activeSite.name:'No website selected'}</span>{activeSite&&<a className="open-target" href={activeSite.url} target="_blank" rel="noreferrer">Open website <ExternalLink size={12}/></a>}</header>
+ return <div className="app"><header className="top"><div className="brand"><span className="brand-icon"><ShieldCheck size={21}/></span><span><b>CanTheySeeIt?</b><small>Simple access control</small></span></div><nav><button className={page==='model'?'active':''} onClick={()=>setPage('model')}><Building2 size={16}/> Model</button><button className={page==='targets'?'active':''} onClick={()=>model?setPage('targets'):setPage('model')}><Globe size={16}/> Website</button><button className={page==='setup'?'active':''} onClick={()=>activeSiteId?setPage('setup'):setPage('model')}><SlidersHorizontal size={16}/> Permissions</button><button className={page==='dashboard'?'active':''} onClick={()=>activeSiteId?setPage('dashboard'):setPage('model')}><LayoutDashboard size={16}/> Dashboard</button></nav><span className="local"><i/>{activeSite?activeSite.name:'No website selected'}</span>{activeSite?.kind!=='source'&&activeSite?.url&&<a className="open-target" href={activeSite.url} target="_blank" rel="noreferrer">Open website <ExternalLink size={12}/></a>}</header>
  <main><div className="intro"><div><small>TEST 1 · ACCESS MADE SIMPLE</small><h1>{page==='model'?'What type of setup are you managing?':page==='targets'?'Now, add the website you want to review':page==='setup'?'Who should be able to do what?':'Your access overview'}</h1><p>{page==='model'?'Start by choosing Business or Organisation. We’ll ask for your website in the next step.':page==='targets'?'Drop your website link below. You can also paste or type it.':page==='setup'?'Choose a role and switch permissions on or off. No technical knowledge needed.':'A clear picture of configured permissions and the risks they may introduce.'}</p></div>{page==='setup'&&<button className="link" onClick={()=>setPage('dashboard')}>View dashboard <ArrowRight size={15}/></button>}</div>
  {page==='model'?<>
   <section className="card"><div className="heading"><div><small>STEP 1 · CHOOSE YOUR MODEL</small><h2>What are you setting up?</h2><p>Pick the option that best describes your website or service.</p></div></div><div className="models">{(['business','organisation'] as Model[]).map(m=><button className={model===m?'model chosen':'model'} onClick={()=>chooseModel(m)}><span className="model-icon">{m==='business'?<Building2/>:<GraduationCap/>}</span><span><b>{m==='business'?'Business':'Organisation'}</b><small>{m==='business'?'For a company, shop, startup or service.':'For a school, college, academy or institution.'}</small><em>{m==='business'?'Customers · Employees · Owner':'Students · Teachers'}</em></span><ArrowRight className="check"/></button>)}</div></section>
