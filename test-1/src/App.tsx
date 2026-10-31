@@ -222,8 +222,9 @@ export default function App(){
   const files=await collectDroppedEntries(event);
   if(files.length){await processSourceFiles(files);return}
   const text=event.dataTransfer.getData('text/plain')||event.dataTransfer.getData('text');
-  if(/^https?:\\/\\//i.test(text.trim())){setInputMode('website');setSiteUrlInput(text.trim());setToast('That looks like a website link — switched to Website link');return}
-  if(text.trim()){const snippet=new File([text],'dropped-code-snippet.txt',{type:'text/plain'});await processSourceFiles([{file:snippet,path:snippet.name}]);return}
+  const droppedText=text.trim();
+  if(droppedText.startsWith('https://')||droppedText.startsWith('http://')){setInputMode('website');setSiteUrlInput(droppedText);setToast('That looks like a website link — switched to Website link');return}
+  if(droppedText){const snippet=new File([text],'dropped-code-snippet.txt',{type:'text/plain'});await processSourceFiles([{file:snippet,path:snippet.name}]);return}
   setToast('Drop a code folder, ZIP, source files or a code selection here')
  }
  function handleWebsiteDrop(event:DragEvent<HTMLElement>){
