@@ -1,12 +1,14 @@
-import { useEffect, useMemo, useState, type CSSProperties, type DragEvent } from 'react';
-import { ShieldCheck, Building2, GraduationCap, UserRound, BriefcaseBusiness, Users, LayoutDashboard, SlidersHorizontal, Plus, Trash2, Check, AlertTriangle, Activity, Search, ArrowRight, RotateCcw, X, LockKeyhole, Clock3, Globe, ExternalLink } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type DragEvent, type ChangeEvent } from 'react';
+import JSZip from 'jszip';
+import { ShieldCheck, Building2, GraduationCap, UserRound, BriefcaseBusiness, Users, LayoutDashboard, SlidersHorizontal, Plus, Trash2, Check, AlertTriangle, Activity, Search, ArrowRight, RotateCcw, X, LockKeyhole, Clock3, Globe, ExternalLink, Code2, FolderOpen, FileCode2 } from 'lucide-react';
 
 type Model = 'business' | 'organisation';
 type Role = 'customer' | 'employee' | 'owner' | 'student' | 'teacher';
 type Level = 'Low' | 'Medium' | 'High' | 'Critical';
 type Permission = { id:string; title:string; description:string; group:string; risk:Level; enabled:boolean; custom?:boolean };
 type EventItem = { id:string; time:string; title:string; detail:string; tone:'safe'|'warning'|'danger'|'neutral'; sample?:boolean };
-type SiteProfile = { id:string; name:string; url:string; lists:Record<Role,Permission[]>; events:EventItem[]; model:Model|null; role:Role|null };
+type SourceFile = { path:string; size:number; content:string };
+type SiteProfile = { id:string; name:string; url:string; kind?:'website'|'source'; sourceFiles?:{path:string;size:number}[]; lists:Record<Role,Permission[]>; events:EventItem[]; model:Model|null; role:Role|null };
 const roleData:Record<Model,{id:Role;name:string;desc:string;icon:any}[]> = {
  business:[
   {id:'customer',name:'Customer',desc:'People who buy or use your services.',icon:UserRound},
@@ -72,7 +74,16 @@ const templates:Record<Role,Permission[]> = {
 };
 const riskPoints:Record<Level,number>={Low:8,Medium:22,High:48,Critical:75};
 // A fresh storage namespace keeps this website-based test workspace separate from older prototypes.
-const key='cantheyseeit-test1-websites-v1';
+const key='cantheyseeit-test1-websites-v2';
+const SOURCE_DB='cantheyseeit-source-projects';
+const SOURCE_STORE='bundles';
+const CODE_EXTENSIONS=['.ts','.tsx','.js','.jsx','.mjs','.cjs','.html','.htm','.css','.scss','.sass','.json','.md','.mdx','.py','.java','.go','.php','.rb','.vue','.svelte','.sql','.yaml','.yml','.toml','.xml','.sh','.bat','.env.example'];
+const IGNORE_PARTS=['node_modules/','.git/','dist/','build/','.next/','coverage/','vendor/'];
+function openSourceDb():Promise<IDBDatabase>{return new Promise((resolve,reject)=>{const request=indexedDB.open(SOURCE_DB,1);request.onupgradeneeded=()=>{if(!request.result.objectStoreNames.contains(SOURCE_STORE))request.result.createObjectStore(SOURCE_STORE,{keyPath:'siteId'})};request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error)})}
+async function saveSourceBundle(siteId:string,files:SourceFile[]){const db=await openSourceDb();await new Promise<void>((resolve,reject)=>{const tx=db.transaction(SOURCE_STORE,'readwrite');tx.objectStore(SOURCE_STORE).put({siteId,files});tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error)});db.close()}
+async function readSourceBundle(siteId:string):Promise<SourceFile[]>{const db=await openSourceDb();const value=await new Promise<SourceFile[]>((resolve,reject)=>{const request=db.transaction(SOURCE_STORE,'readonly').objectStore(SOURCE_STORE).get(siteId);request.onsuccess=()=>resolve(request.result?.files??[]);request.onerror=()=>reject(request.error)});db.close();return value}
+async function deleteSourceBundle(siteId:string){const db=await openSourceDb();await new Promise<void>((resolve,reject)=>{const tx=db.transaction(SOURCE_STORE,'readwrite');tx.objectStore(SOURCE_STORE).delete(siteId);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error)});db.close()}
+function isCodePath(path:string){const clean=path.replace(/\\\\/g,'/').toLowerCase();if(IGNORE_PARTS.some(part=>clean.includes(part)))return false;const name=clean.split('/').pop()??'';if(name.startsWith('.')&&!name.startsWith('.env.example'))return false;return CODE_EXTENSIONS.some(ext=>name.endsWith(ext))||['dockerfile','makefile','gemfile'].includes(name)}
 const time=()=>new Date().toLocaleString([],{dateStyle:'medium',timeStyle:'short'});
 const id=()=>Math.random().toString(36).slice(2,9);
 function score(items:Permission[]){const a=items.filter(x=>x.enabled);return a.length?Math.min(100,Math.round(a.reduce((n,x)=>n+riskPoints[x.risk],0)/a.length)):0}
@@ -87,6 +98,12 @@ export default function App(){
  const [activeSiteId,setActiveSiteId]=useState('');
  const [siteNameInput,setSiteNameInput]=useState('');
  const [siteUrlInput,setSiteUrlInput]=useState('');
+ const [inputMode,setInputMode]=useState<'website'|'source'>('website');
+ const [sourceFiles,setSourceFiles]=useState<SourceFile[]>([]);
+ const [isLoadingSource,setIsLoadingSource]=useState(false);
+ const [sourceError,setSourceError]=useState('');
+ const sourceFilesRef=useRef<HTMLInputElement>(null);
+ const sourceFolderRef=useRef<HTMLInputElement>(null);
  const [authorized,setAuthorized]=useState(false);
  const [isDragging,setIsDragging]=useState(false);
  const [page,setPage]=useState<'model'|'targets'|'setup'|'dashboard'>('model');
