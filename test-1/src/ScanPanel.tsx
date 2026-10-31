@@ -189,7 +189,7 @@ export default function ScanPanel({
           {scanning ? <LoaderCircle className="scan-spin" size={16} /> : <Play size={15} />}
           {scanning ? 'Analysing project…' : targetKind === 'website' ? 'Check website now' : 'Analyse source code now'}
         </button>
-        <span>{targetKind === 'website' ? 'One bounded homepage request; no crawling or login attempts.' : 'Text-only analysis; your code is never executed.'}</span>
+        <span>{targetKind === 'website' ? 'Bounded homepage check with limited redirects; no crawling or login attempts.' : 'Text-only analysis; your code is never executed.'}</span>
       </div>
 
       {error && <div className="scan-error"><AlertTriangle size={16} /> {error}</div>}
