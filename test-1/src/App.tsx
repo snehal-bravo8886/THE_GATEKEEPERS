@@ -441,14 +441,14 @@ export default function App(){
   if(inputMode==='website'&&!url){setToast('Enter a valid website address');return}
   if(inputMode==='source'&&!sourceFiles.length){setToast('Add a ZIP, folder or code files first');return}
   const fallbackName=inputMode==='website'?new URL(url).hostname:`${selectedScenario?.title??'Project'} source code`;
-  const site:SiteProfile={id:`site-${id()}`,name:siteNameInput.trim()||fallbackName,url,kind:inputMode,sourceFiles:inputMode==='source'?sourceFiles.map(({path,size})=>({path,size})):[],scenario:scenarioId,lists:structuredClone(lists),events:[],model,role:null};
+  const site:SiteProfile={id:`site-${id()}`,name:fallbackName,url,kind:inputMode,sourceFiles:inputMode==='source'?sourceFiles.map(({path,size})=>({path,size})):[],scenario:scenarioId,lists:structuredClone(lists),events:[],model,role:null};
   setSites(previous=>[...previous,site]);setActiveSiteId(site.id);
   setLists(structuredClone(lists));setEvents([]);setRole(null);
   if(inputMode==='source'){void saveSourceBundle(site.id,sourceFiles).catch(()=>setToast('Could not save code files in this browser'));}
   setSourceFiles([]);setSiteUrlInput('');setAuthorized(false);setPage('setup');setToast(inputMode==='source'?'Source code added — configure its permissions':'Website added — configure its permissions');
  }
- function startNewTarget(){setActiveSiteId('');setSiteNameInput('');setSiteUrlInput('');setInputMode('website');setSourceFiles([]);setSourceError('');setAuthorized(false);setIsDragging(false);setScenarioId(null);setPage(model?'scenario':'model')}
-  function chooseModel(next:Model){setActiveSiteId('');setModel(next);setRole(null);setScenarioId(null);setLists(structuredClone(templates));setSiteNameInput('');setSiteUrlInput('');setInputMode('website');setSourceFiles([]);setSourceError('');setAuthorized(false);setIsDragging(false);setPage('scenario')}
+ function startNewTarget(){setActiveSiteId('');setSiteUrlInput('');setInputMode('website');setSourceFiles([]);setSourceError('');setAuthorized(false);setIsDragging(false);setScenarioId(null);setPage(model?'scenario':'model')}
+  function chooseModel(next:Model){setActiveSiteId('');setModel(next);setRole(null);setScenarioId(null);setLists(structuredClone(templates));setSiteUrlInput('');setInputMode('website');setSourceFiles([]);setSourceError('');setAuthorized(false);setIsDragging(false);setPage('scenario')}
   function chooseScenario(next:ScenarioId){const definition=scenarios.find(item=>item.id===next);if(!definition||definition.model!==model)return;setScenarioId(next);setLists(getScenarioLists(next));setRole(null);setPage('targets');setToast(`${definition.title} test cases loaded`)}
   async function processSourceFiles(items:{file:File;path:string}[]){
   setIsLoadingSource(true);setSourceError('');
