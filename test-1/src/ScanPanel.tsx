@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { AlertTriangle, CheckCircle2, CircleHelp, LoaderCircle, Play, RefreshCw, ShieldCheck, Wifi, WifiOff } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, CircleHelp, LoaderCircle, Play, RefreshCw, ShieldCheck } from 'lucide-react';
 import './scan.css';
 
 type PermissionInput = {
