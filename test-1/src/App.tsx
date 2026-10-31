@@ -429,8 +429,8 @@ export default function App(){
   if(inputMode==='source'){void saveSourceBundle(site.id,sourceFiles).catch(()=>setToast('Could not save code files in this browser'));}
   setSourceFiles([]);setSiteNameInput('');setSiteUrlInput('');setAuthorized(false);setPage('setup');setToast(inputMode==='source'?'Source code added — configure its permissions':'Website added — configure its permissions');
  }
- function startNewTarget(){setActiveSiteId('');setSiteNameInput('');setSiteUrlInput('');setSourceFiles([]);setSourceError('');setAuthorized(false);setScenarioId(null);setPage(model?'scenario':'model')}
-  function chooseModel(next:Model){setActiveSiteId('');setModel(next);setRole(null);setScenarioId(null);setLists(structuredClone(templates));setSiteNameInput('');setSiteUrlInput('');setSourceFiles([]);setSourceError('');setAuthorized(false);setPage('scenario')}
+ function startNewTarget(){setActiveSiteId('');setSiteNameInput('');setSiteUrlInput('');setInputMode('website');setSourceFiles([]);setSourceError('');setAuthorized(false);setIsDragging(false);setScenarioId(null);setPage(model?'scenario':'model')}
+  function chooseModel(next:Model){setActiveSiteId('');setModel(next);setRole(null);setScenarioId(null);setLists(structuredClone(templates));setSiteNameInput('');setSiteUrlInput('');setInputMode('website');setSourceFiles([]);setSourceError('');setAuthorized(false);setIsDragging(false);setPage('scenario')}
   function chooseScenario(next:ScenarioId){const definition=scenarios.find(item=>item.id===next);if(!definition||definition.model!==model)return;setScenarioId(next);setLists(getScenarioLists(next));setRole(null);setPage('targets');setToast(`${definition.title} test cases loaded`)}
   async function processSourceFiles(items:{file:File;path:string}[]){
   setIsLoadingSource(true);setSourceError('');
