@@ -6,7 +6,7 @@ type Model = 'business' | 'organisation';
 type Role = 'customer' | 'employee' | 'owner' | 'student' | 'teacher';
 type Level = 'Low' | 'Medium' | 'High' | 'Critical';
 type Permission = { id:string; title:string; description:string; group:string; risk:Level; enabled:boolean; custom?:boolean };
-type EventItem = { id:string; time:string; title:string; detail:string; tone:'safe'|'warning'|'danger'|'neutral'; sample?:boolean };
+type EventItem = { id:string; time:string; title:string; detail:string; tone:'safe'|'warning'|'danger'|'neutral'; sample?:boolean; riskImpact?:number; riskLevel?:Level };
 type SourceFile = { path:string; size:number; content:string };
 type SiteProfile = { id:string; name:string; url:string; kind?:'website'|'source'; sourceFiles?:{path:string;size:number}[]; scenario?:ScenarioId|null; lists:Record<Role,Permission[]>; events:EventItem[]; model:Model|null; role:Role|null };
 type ScenarioId = 'medical-clinic'|'restaurant'|'small-business'|'college-event'|'marks-grades'|'attendance'|'library'|'exam-management'|'student-records';
@@ -320,41 +320,24 @@ function getScenarioLists(id:ScenarioId):Record<Role,Permission[]>{
  };
 }
 
-const riskBase:Record<Level,number>={Low:4,Medium:13,High:29,Critical:46};
-// A fresh storage namespace keeps this website-based test workspace separate from older prototypes.
-const key='cantheyseeit-test1-websites-v2';
-const SOURCE_DB='cantheyseeit-source-projects';
-const SOURCE_STORE='bundles';
-const CODE_EXTENSIONS=['.ts','.tsx','.js','.jsx','.mjs','.cjs','.html','.htm','.css','.scss','.sass','.json','.md','.mdx','.py','.java','.go','.php','.rb','.vue','.svelte','.sql','.yaml','.yml','.toml','.xml','.sh','.bat','.txt','.env.example'];
-const IGNORE_PARTS=['node_modules/','.git/','dist/','build/','.next/','coverage/','vendor/'];
-function openSourceDb():Promise<IDBDatabase>{return new Promise((resolve,reject)=>{const request=indexedDB.open(SOURCE_DB,1);request.onupgradeneeded=()=>{if(!request.result.objectStoreNames.contains(SOURCE_STORE))request.result.createObjectStore(SOURCE_STORE,{keyPath:'siteId'})};request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error)})}
-async function saveSourceBundle(siteId:string,files:SourceFile[]){const db=await openSourceDb();await new Promise<void>((resolve,reject)=>{const tx=db.transaction(SOURCE_STORE,'readwrite');tx.objectStore(SOURCE_STORE).put({siteId,files});tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error)});db.close()}
-async function readSourceBundle(siteId:string):Promise<SourceFile[]>{const db=await openSourceDb();const value=await new Promise<SourceFile[]>((resolve,reject)=>{const request=db.transaction(SOURCE_STORE,'readonly').objectStore(SOURCE_STORE).get(siteId);request.onsuccess=()=>resolve(request.result?.files??[]);request.onerror=()=>reject(request.error)});db.close();return value}
-async function deleteSourceBundle(siteId:string){const db=await openSourceDb();await new Promise<void>((resolve,reject)=>{const tx=db.transaction(SOURCE_STORE,'readwrite');tx.objectStore(SOURCE_STORE).delete(siteId);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error)});db.close()}
-function isCodePath(path:string){const clean=path.split(String.fromCharCode(92)).join('/').toLowerCase();if(IGNORE_PARTS.some(part=>clean.includes(part)))return false;const name=clean.split('/').pop()??'';if(name.startsWith('.')&&!name.startsWith('.env.example'))return false;return CODE_EXTENSIONS.some(ext=>name.endsWith(ext))||['dockerfile','makefile','gemfile'].includes(name)}
-const time=()=>new Date().toLocaleString([],{dateStyle:'medium',timeStyle:'short'});
-const id=()=>Math.random().toString(36).slice(2,9);
-// Context factors raise exposure for cross-person access, sensitive data and powerful actions.
-function permissionExposure(item:Permission):number{
- const text=`${item.title} ${item.description} ${item.group}`.toLowerCase();
- let weight=riskBase[item.risk];
- if(/\b(other|another|all|every|unrelated|entire|full|everyone)\b/.test(text))weight*=1.3;
- if(/\b(patient|medical|diagnosis|prescription|marks|grades|identity|bank|payroll|payment|financial|personal|private)\b/.test(text))weight*=1.2;
- if(/\b(edit|change|manage|delete|issue|approve|admin|settings|payout|role|permission|security)\b/.test(text))weight*=1.15;
- return Math.min(0.85,weight/100);
-}
-function score(items:Permission[]):number{
- const remaining=items.filter(item=>item.enabled).reduce((residual,item)=>residual*(1-permissionExposure(item)),1);
+// Risk is based only on security incidents actually recorded in the activity timeline.
+// Normal role permissions and ordinary permission changes never add risk.
+const incidentImpact:Record<Level,number>={Low:10,Medium:25,High:45,Critical:70};
+function score(events:EventItem[]):number{
+ const impacts=events.map(event=>event.riskImpact??0).filter(value=>value>0);
+ const remaining=impacts.reduce((residual,impact)=>residual*(1-Math.min(85,Math.max(0,impact))/100),1);
  return Math.round((1-remaining)*100);
 }
-function riskSignals(items:Permission[]){
- const enabled=items.filter(item=>item.enabled);
- const highImpact=enabled.filter(item=>item.risk==='High'||item.risk==='Critical').length;
- const broadAccess=enabled.filter(item=>/\b(other|another|all|every|unrelated|entire|full|everyone)\b/i.test(`${item.title} ${item.description}`)).length;
- const sensitiveData=enabled.filter(item=>/\b(patient|medical|diagnosis|prescription|marks|grades|identity|bank|payroll|payment|financial|personal|private)\b/i.test(`${item.title} ${item.description} ${item.group}`)).length;
- return {enabled:enabled.length,highImpact,broadAccess,sensitiveData};
+function riskSignals(events:EventItem[]){
+ const incidents=events.filter(event=>(event.riskImpact??0)>0);
+ return {
+  triggeredCount:incidents.length,
+  highImpact:incidents.filter(event=>event.riskLevel==='High'||event.riskLevel==='Critical').length,
+  sampleCount:incidents.filter(event=>event.sample).length,
+  lastTriggered:incidents[0]?.time??null
+ };
 }
-function band(n:number):Level{return n>=65?'Critical':n>=40?'High':n>=20?'Medium':'Low'}
+function band(n:number):Level{return n>=70?'Critical':n>=40?'High':n>=20?'Medium':'Low'}
 
 export default function App(){
  const [model,setModel]=useState<Model|null>(null);
