@@ -405,7 +405,7 @@ export default function App(){
  function removeCustom(item:Permission){if(!role)return;setLists(v=>({...v,[role]:v[role].filter(x=>x.id!==item.id)}));addEvent(`Permission deleted: ${item.title}`,`${selected?.name} · Removed from this role`);setToast('Permission deleted')}
  function reset(){if(!role)return;setLists(v=>({...v,[role]:structuredClone(templates[role])}));addEvent('Role permissions reset',`${selected?.name} restored to the starter template`);setToast('Role restored')}
  function sample(){addEvent('Suspicious access attempt (sample)','A student attempted to open another student’s private marks. This is a demonstration event, not a live backend alert.','danger',true);setToast('Sample alert added')}
- const rolesAll=(Object.keys(roleData) as Model[]).flatMap(m=>roleData[m].map(r=>({...r,model:m})));
+ const rolesAll=model?roleData[model].map(r=>({...r,model,name:selectedScenario?.roles[r.id]??r.name})):[];
  function parsedWebsiteUrl(raw:string):string|null{
   try{
    const value=raw.trim();
@@ -516,6 +516,7 @@ export default function App(){
   </>:page==='targets'?<>
  <section className="card target-form">
   <div className="heading"><div><small>STEP 3 · ADD YOUR PROJECT</small><h2>Add a website link or source code</h2><p>Choose how you want to provide the project. You can give us the live URL or the actual code files.</p></div><span className="target-mark"><Code2 size={21}/></span></div>
+  {selectedScenario&&<div className="selected-scenario-note"><span>{selectedScenario.emoji}</span><div><small>SELECTED TEST SUITE</small><b>{selectedScenario.title}</b><em>{selectedScenario.cases.length} example access tests ready</em></div><button type="button" className="link" onClick={()=>setPage('scenario')}>Change</button></div>}
   <label className="site-name-field">Project name <span>Optional</span><input value={siteNameInput} onChange={e=>setSiteNameInput(e.target.value)} placeholder="e.g. My Vibe-Coded Store"/></label>
   <div className="input-modes">
    <button type="button" className={inputMode==='website'?'mode-option selected':'mode-option'} onClick={()=>{setInputMode('website');setSourceError('')}}><Globe size={16}/> Website link</button>
