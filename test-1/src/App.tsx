@@ -320,7 +320,7 @@ function getScenarioLists(id:ScenarioId):Record<Role,Permission[]>{
  };
 }
 
-const riskPoints:Record<Level,number>={Low:8,Medium:22,High:48,Critical:75};
+const riskBase:Record<Level,number>={Low:4,Medium:13,High:29,Critical:46};
 // A fresh storage namespace keeps this website-based test workspace separate from older prototypes.
 const key='cantheyseeit-test1-websites-v2';
 const SOURCE_DB='cantheyseeit-source-projects';
@@ -334,8 +334,27 @@ async function deleteSourceBundle(siteId:string){const db=await openSourceDb();a
 function isCodePath(path:string){const clean=path.split(String.fromCharCode(92)).join('/').toLowerCase();if(IGNORE_PARTS.some(part=>clean.includes(part)))return false;const name=clean.split('/').pop()??'';if(name.startsWith('.')&&!name.startsWith('.env.example'))return false;return CODE_EXTENSIONS.some(ext=>name.endsWith(ext))||['dockerfile','makefile','gemfile'].includes(name)}
 const time=()=>new Date().toLocaleString([],{dateStyle:'medium',timeStyle:'short'});
 const id=()=>Math.random().toString(36).slice(2,9);
-function score(items:Permission[]){const a=items.filter(x=>x.enabled);return a.length?Math.min(100,Math.round(a.reduce((n,x)=>n+riskPoints[x.risk],0)/a.length)):0}
-function band(n:number):Level{return n>=60?'Critical':n>=38?'High':n>=18?'Medium':'Low'}
+// Context factors raise exposure for cross-person access, sensitive data and powerful actions.
+function permissionExposure(item:Permission):number{
+ const text=`${item.title} ${item.description} ${item.group}`.toLowerCase();
+ let weight=riskBase[item.risk];
+ if(/\b(other|another|all|every|unrelated|entire|full|everyone)\b/.test(text))weight*=1.3;
+ if(/\b(patient|medical|diagnosis|prescription|marks|grades|identity|bank|payroll|payment|financial|personal|private)\b/.test(text))weight*=1.2;
+ if(/\b(edit|change|manage|delete|issue|approve|admin|settings|payout|role|permission|security)\b/.test(text))weight*=1.15;
+ return Math.min(0.85,weight/100);
+}
+function score(items:Permission[]):number{
+ const remaining=items.filter(item=>item.enabled).reduce((residual,item)=>residual*(1-permissionExposure(item)),1);
+ return Math.round((1-remaining)*100);
+}
+function riskSignals(items:Permission[]){
+ const enabled=items.filter(item=>item.enabled);
+ const highImpact=enabled.filter(item=>item.risk==='High'||item.risk==='Critical').length;
+ const broadAccess=enabled.filter(item=>/\b(other|another|all|every|unrelated|entire|full|everyone)\b/i.test(`${item.title} ${item.description}`)).length;
+ const sensitiveData=enabled.filter(item=>/\b(patient|medical|diagnosis|prescription|marks|grades|identity|bank|payroll|payment|financial|personal|private)\b/i.test(`${item.title} ${item.description} ${item.group}`)).length;
+ return {enabled:enabled.length,highImpact,broadAccess,sensitiveData};
+}
+function band(n:number):Level{return n>=65?'Critical':n>=40?'High':n>=20?'Medium':'Low'}
 
 export default function App(){
  const [model,setModel]=useState<Model|null>(null);
