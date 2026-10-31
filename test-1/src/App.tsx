@@ -241,16 +241,33 @@ export default function App(){
   {sites.length>0&&<section className="card"><div className="heading"><div><small>EXISTING WORKSPACES</small><h2>Your saved websites</h2><p>Open a website you have already added.</p></div><span className="count">{sites.length} saved</span></div><div className="site-list">{sites.map(site=><div className="site-row"><span className="site-icon"><Globe size={18}/></span><span className="site-copy"><b>{site.name}</b><small>{site.url}</small></span><button className="light" onClick={()=>selectTarget(site)}>Open</button></div>)}</div></section>}
   </>:page==='targets'?<>
  <section className="card target-form">
-  <div className="heading"><div><small>STEP 2 · ADD YOUR WEBSITE</small><h2>Bring your website into the workspace</h2><p>Drag a link from your browser’s address bar, or paste the website address below.</p></div><span className="target-mark"><Globe size={21}/></span></div>
-  <label className="site-name-field">Website name <span>Optional</span><input value={siteNameInput} onChange={e=>setSiteNameInput(e.target.value)} placeholder="e.g. My Vibe-Coded Store"/></label>
-  <div className={isDragging?'dropzone dragging':'dropzone'} onDragOver={e=>{e.preventDefault();setIsDragging(true)}} onDragLeave={e=>{if(e.currentTarget===e.target)setIsDragging(false)}} onDrop={handleWebsiteDrop}>
-   <span className="drop-icon"><Globe size={25}/></span><b>{isDragging?'Drop your website link here':'Drag & drop your website link here'}</b><p>Drag the URL from your browser address bar, or drag a website link from a page.</p><span className="drop-or">OR PASTE / TYPE BELOW</span>
+  <div className="heading"><div><small>STEP 2 · ADD YOUR PROJECT</small><h2>Add a website link or source code</h2><p>Choose how you want to provide the project. You can give us the live URL or the actual code files.</p></div><span className="target-mark"><Code2 size={21}/></span></div>
+  <label className="site-name-field">Project name <span>Optional</span><input value={siteNameInput} onChange={e=>setSiteNameInput(e.target.value)} placeholder="e.g. My Vibe-Coded Store"/></label>
+  <div className="input-modes">
+   <button type="button" className={inputMode==='website'?'mode-option selected':'mode-option'} onClick={()=>{setInputMode('website');setSourceError('')}}><Globe size={16}/> Website link</button>
+   <button type="button" className={inputMode==='source'?'mode-option selected':'mode-option'} onClick={()=>{setInputMode('source');setSourceError('')}}><Code2 size={16}/> Source code</button>
   </div>
-  <div className="target-fields single">
-   <label>Website address<input value={siteUrlInput} onChange={e=>setSiteUrlInput(e.target.value)} onDragOver={e=>e.preventDefault()} onDrop={handleWebsiteDrop} placeholder="https://your-website.com" inputMode="url"/><small>Examples: https://my-site.com or http://localhost:3000</small></label>
-  </div>
-  <label className="authorise"><input type="checkbox" checked={authorized} onChange={e=>setAuthorized(e.target.checked)}/><span><b>I own this website or have explicit permission to test it.</b><small>Only add websites you are authorised to assess.</small></span></label>
-  <div className="target-submit"><button className="light" onClick={()=>setPage('model')}>Back to model</button><button className="blue" onClick={createTarget} disabled={!parsedWebsiteUrl(siteUrlInput)||!authorized}><Plus size={15}/> Add website and continue</button><p>This adds the link to your {model==='business'?'Business':'Organisation'} workspace. It does not scan the website yet.</p></div>
+  {inputMode==='website'?<>
+   <div className={isDragging?'dropzone dragging':'dropzone'} onDragOver={e=>{e.preventDefault();setIsDragging(true)}} onDragLeave={e=>{if(e.currentTarget===e.target)setIsDragging(false)}} onDrop={handleWebsiteDrop}>
+    <span className="drop-icon"><Globe size={25}/></span><b>{isDragging?'Drop your website link here':'Drag & drop your website link here'}</b><p>Drag a URL from your browser address bar, or paste/type it below.</p>
+   </div>
+   <div className="target-fields single">
+    <label>Website address<input value={siteUrlInput} onChange={e=>setSiteUrlInput(e.target.value)} onDragOver={e=>e.preventDefault()} onDrop={handleWebsiteDrop} placeholder="https://your-website.com" inputMode="url"/><small>Examples: https://my-site.com or http://localhost:3000</small></label>
+   </div>
+  </>:<>
+   <div className={isDragging?'dropzone source-dropzone dragging':'dropzone source-dropzone'} onDragOver={e=>{e.preventDefault();setIsDragging(true)}} onDragLeave={e=>{if(e.currentTarget===e.target)setIsDragging(false)}} onDrop={handleSourceDrop}>
+    <span className="drop-icon"><Code2 size={27}/></span><b>{isDragging?'Drop your project here':'Drag & drop your source code here'}</b><p>Drop a whole project folder, a .zip file, or multiple code files from your computer.</p>
+    <div className="source-pickers"><button type="button" className="light" onClick={()=>sourceFilesRef.current?.click()}><FileCode2 size={15}/> Choose files / ZIP</button><button type="button" className="light" onClick={()=>sourceFolderRef.current?.click()}><FolderOpen size={15}/> Choose project folder</button></div>
+   </div>
+   <input ref={sourceFilesRef} className="hidden-file" type="file" multiple accept=".zip,.ts,.tsx,.js,.jsx,.mjs,.cjs,.html,.htm,.css,.scss,.json,.md,.mdx,.py,.java,.go,.php,.rb,.vue,.svelte,.sql,.yaml,.yml,.toml,.xml,.sh,.bat" onChange={handleSourceSelection}/>
+   <input ref={sourceFolderRef} className="hidden-file" type="file" multiple {...({webkitdirectory:'',directory:''} as any)} onChange={handleSourceSelection}/>
+   {isLoadingSource&&<p className="source-status">Reading your project files…</p>}
+   {sourceError&&<p className="source-error">{sourceError}</p>}
+   {sourceFiles.length>0&&<div className="source-preview"><div className="source-preview-head"><span><b>{sourceFiles.length} source files loaded</b><small>{(sourceFiles.reduce((total,file)=>total+file.size,0)/1024).toFixed(1)} KB · saved in this browser</small></span><button type="button" className="light" onClick={()=>setSourceFiles([])}><Trash2 size={14}/> Clear</button></div><div className="source-file-list">{sourceFiles.slice(0,8).map(file=><div key={file.path}><FileCode2 size={13}/><span>{file.path}</span><small>{(file.size/1024).toFixed(1)} KB</small></div>)}{sourceFiles.length>8&&<small>and {sourceFiles.length-8} more files…</small>}</div></div>}
+   <p className="source-footnote">Supported: ZIP, project folders, TS/TSX, JS/JSX, HTML, CSS, JSON, Python and more. node_modules, build folders and .git are skipped. Files stay in this browser; this prototype does not send your code to a server.</p>
+  </>}
+  <label className="authorise"><input type="checkbox" checked={authorized} onChange={e=>setAuthorized(e.target.checked)}/><span><b>I own this website or have permission to review this code.</b><small>Only add websites or source projects you are authorised to assess.</small></span></label>
+  <div className="target-submit"><button className="light" onClick={()=>setPage('model')}>Back to model</button><button className="blue" onClick={createTarget} disabled={(inputMode==='website'?!parsedWebsiteUrl(siteUrlInput):sourceFiles.length===0)||!authorized||isLoadingSource}><Plus size={15}/> Add {inputMode==='website'?'website':'source project'} and continue</button><p>Choose website link or source code. The actual security analysis needs a connected backend.</p></div>
  </section>
  {sites.length>0&&<section className="card"><div className="heading"><div><small>YOUR WORKSPACES</small><h2>Websites added</h2><p>Switch between sites. Each one keeps its own permissions and timeline.</p></div><span className="count">{sites.length} saved</span></div><div className="site-list">{sites.map(site=><div className={site.id===activeSiteId?'site-row current':'site-row'}><span className="site-icon"><Globe size={18}/></span><span className="site-copy"><b>{site.name}</b><small>{site.url}</small></span>{site.id===activeSiteId&&<em>Current</em>}<button className="light" onClick={()=>selectTarget(site)}>Open</button><button className="site-remove" onClick={()=>removeTarget(site)} title="Remove website"><Trash2 size={15}/></button></div>)}</div></section>}
  <div className="target-note"><AlertTriangle size={17}/><span><b>Authorisation reminder:</b> only add websites you own or have permission to assess. This step stores the target URL; it does not crawl pages or send security requests.</span></div>
