@@ -52,3 +52,26 @@
 .active-site-banner small{font-size:8px;letter-spacing:1px;color:#7294b5}
 .active-site-banner b{font:700 12px Manrope;color:#35516d;margin-top:2px}
 @media(max-width:650px){.dropzone{min-height:170px;padding:18px}.dropzone b{font-size:12px}.active-site-banner{flex-wrap:wrap}.active-site-banner .light{margin-left:25px}}
+
+/* Source-code import: file, ZIP and project-folder drop */
+.input-modes{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:18px;padding:5px;border-radius:11px;background:#f1f5f9}
+.mode-option{display:flex;align-items:center;justify-content:center;gap:8px;border:1px solid transparent;background:transparent;color:#748398;border-radius:8px;padding:11px;font:700 11px 'DM Sans';cursor:pointer}
+.mode-option.selected{background:white;border-color:#dce7f2;color:#2879c8;box-shadow:0 2px 7px #20364a0b}
+.source-dropzone{min-height:230px}
+.source-dropzone .source-pickers{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:7px}
+.source-pickers .light{cursor:pointer}
+.hidden-file{display:none!important}
+.source-status{font-size:10px;color:#397fb9;margin:12px 0}
+.source-error{font-size:10px;line-height:1.5;color:#bc4e59;background:#fff0f1;border:1px solid #f6d6d9;border-radius:8px;padding:10px;margin:12px 0}
+.source-preview{margin-top:13px;border:1px solid #dce8f3;border-radius:10px;overflow:hidden;background:#fbfdff}
+.source-preview-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 13px;background:#f1f7fd;border-bottom:1px solid #e5eef7}
+.source-preview-head b,.source-preview-head small{display:block}
+.source-preview-head b{font-size:11px;color:#35516d}
+.source-preview-head small{font-size:9px;color:#8b9cae;margin-top:3px}
+.source-file-list{padding:8px 13px}
+.source-file-list>div{display:flex;align-items:center;gap:8px;padding:6px 0;color:#66809a;font-size:10px;border-bottom:1px solid #eef3f8}
+.source-file-list>div:last-of-type{border-bottom:0}
+.source-file-list>div span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#526a83}
+.source-file-list>div small,.source-file-list>small{font-size:9px;color:#9aa8b6}
+.source-footnote{font-size:9px;line-height:1.5;color:#8d9baa;margin:12px 1px 0}
+@media(max-width:580px){.input-modes{gap:5px}.mode-option{font-size:10px;padding:9px 5px}.source-dropzone{min-height:210px}.source-dropzone .source-pickers{width:100%;flex-direction:column}.source-pickers button{width:100%}.source-preview-head{align-items:flex-start;flex-direction:column}.source-preview-head .light{width:100%}}
