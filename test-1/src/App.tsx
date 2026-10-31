@@ -77,13 +77,13 @@ const riskPoints:Record<Level,number>={Low:8,Medium:22,High:48,Critical:75};
 const key='cantheyseeit-test1-websites-v2';
 const SOURCE_DB='cantheyseeit-source-projects';
 const SOURCE_STORE='bundles';
-const CODE_EXTENSIONS=['.ts','.tsx','.js','.jsx','.mjs','.cjs','.html','.htm','.css','.scss','.sass','.json','.md','.mdx','.py','.java','.go','.php','.rb','.vue','.svelte','.sql','.yaml','.yml','.toml','.xml','.sh','.bat','.env.example'];
+const CODE_EXTENSIONS=['.ts','.tsx','.js','.jsx','.mjs','.cjs','.html','.htm','.css','.scss','.sass','.json','.md','.mdx','.py','.java','.go','.php','.rb','.vue','.svelte','.sql','.yaml','.yml','.toml','.xml','.sh','.bat','.txt','.env.example'];
 const IGNORE_PARTS=['node_modules/','.git/','dist/','build/','.next/','coverage/','vendor/'];
 function openSourceDb():Promise<IDBDatabase>{return new Promise((resolve,reject)=>{const request=indexedDB.open(SOURCE_DB,1);request.onupgradeneeded=()=>{if(!request.result.objectStoreNames.contains(SOURCE_STORE))request.result.createObjectStore(SOURCE_STORE,{keyPath:'siteId'})};request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error)})}
 async function saveSourceBundle(siteId:string,files:SourceFile[]){const db=await openSourceDb();await new Promise<void>((resolve,reject)=>{const tx=db.transaction(SOURCE_STORE,'readwrite');tx.objectStore(SOURCE_STORE).put({siteId,files});tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error)});db.close()}
 async function readSourceBundle(siteId:string):Promise<SourceFile[]>{const db=await openSourceDb();const value=await new Promise<SourceFile[]>((resolve,reject)=>{const request=db.transaction(SOURCE_STORE,'readonly').objectStore(SOURCE_STORE).get(siteId);request.onsuccess=()=>resolve(request.result?.files??[]);request.onerror=()=>reject(request.error)});db.close();return value}
 async function deleteSourceBundle(siteId:string){const db=await openSourceDb();await new Promise<void>((resolve,reject)=>{const tx=db.transaction(SOURCE_STORE,'readwrite');tx.objectStore(SOURCE_STORE).delete(siteId);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error)});db.close()}
-function isCodePath(path:string){const clean=path.replace(/\\\\/g,'/').toLowerCase();if(IGNORE_PARTS.some(part=>clean.includes(part)))return false;const name=clean.split('/').pop()??'';if(name.startsWith('.')&&!name.startsWith('.env.example'))return false;return CODE_EXTENSIONS.some(ext=>name.endsWith(ext))||['dockerfile','makefile','gemfile'].includes(name)}
+function isCodePath(path:string){const clean=path.split(String.fromCharCode(92)).join('/').toLowerCase();if(IGNORE_PARTS.some(part=>clean.includes(part)))return false;const name=clean.split('/').pop()??'';if(name.startsWith('.')&&!name.startsWith('.env.example'))return false;return CODE_EXTENSIONS.some(ext=>name.endsWith(ext))||['dockerfile','makefile','gemfile'].includes(name)}
 const time=()=>new Date().toLocaleString([],{dateStyle:'medium',timeStyle:'short'});
 const id=()=>Math.random().toString(36).slice(2,9);
 function score(items:Permission[]){const a=items.filter(x=>x.enabled);return a.length?Math.min(100,Math.round(a.reduce((n,x)=>n+riskPoints[x.risk],0)/a.length)):0}
@@ -183,7 +183,7 @@ export default function App(){
   try{
    const collected:SourceFile[]=[];let total=0;const maxTotal=12*1024*1024;const maxFile=2*1024*1024;const maxFiles=250;
    for(const item of items){
-    const filePath=item.path.replace(/\\\\/g,'/');
+    const filePath=item.path.split(String.fromCharCode(92)).join('/');
     if(filePath.toLowerCase().endsWith('.zip')){
      const zip=await JSZip.loadAsync(item.file);
      for(const [zipPath,entry] of Object.entries(zip.files)){
@@ -212,12 +212,20 @@ export default function App(){
   if(!entries.length)return Array.from(event.dataTransfer.files).map(file=>({file,path:file.name}));
   const result:{file:File;path:string}[]=[];
   const walk=async(entry:any,prefix=''):Promise<void>=>{
-   if(entry.isFile){const file:File=await new Promise((resolve,reject)=>entry.file(resolve,reject));result.push({file,path:prefix+file.name});return}
-   if(entry.isDirectory){const reader=entry.createReader();while(true){const batch:any[]=await new Promise((resolve,reject)=>reader.readEntries(resolve,reject));if(!batch.length)break;for(const child of batch)await walk(child,prefix+entry.name+'/')}}
+   if(entry.isFile){const file:File=await new Promise<File>((resolve,reject)=>entry.file(resolve,reject));result.push({file,path:prefix+file.name});return}
+   if(entry.isDirectory){const reader=entry.createReader();while(true){const batch:any[]=await new Promise<any[]>((resolve,reject)=>reader.readEntries(resolve,reject));if(!batch.length)break;for(const child of batch)await walk(child,prefix+entry.name+'/')}}
   };
   for(const entry of entries)await walk(entry,'');return result;
  }
- async function handleSourceDrop(event:DragEvent<HTMLElement>){event.preventDefault();setIsDragging(false);const files=await collectDroppedEntries(event);if(files.length)await processSourceFiles(files);else setToast('Drop a code folder, ZIP or source files here')}
+ async function handleSourceDrop(event:DragEvent<HTMLElement>){
+  event.preventDefault();setIsDragging(false);
+  const files=await collectDroppedEntries(event);
+  if(files.length){await processSourceFiles(files);return}
+  const text=event.dataTransfer.getData('text/plain')||event.dataTransfer.getData('text');
+  if(/^https?:\\/\\//i.test(text.trim())){setInputMode('website');setSiteUrlInput(text.trim());setToast('That looks like a website link — switched to Website link');return}
+  if(text.trim()){const snippet=new File([text],'dropped-code-snippet.txt',{type:'text/plain'});await processSourceFiles([{file:snippet,path:snippet.name}]);return}
+  setToast('Drop a code folder, ZIP, source files or a code selection here')
+ }
  function handleWebsiteDrop(event:DragEvent<HTMLElement>){
    event.preventDefault();setIsDragging(false);
    const raw=event.dataTransfer.getData('text/uri-list')||event.dataTransfer.getData('text/plain')||event.dataTransfer.getData('text');
