@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type DragEvent, type ChangeEvent } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type DragEvent, type ChangeEvent } from 'react';
 import JSZip from 'jszip';
 import { ShieldCheck, Building2, GraduationCap, UserRound, BriefcaseBusiness, Users, LayoutDashboard, SlidersHorizontal, Plus, Trash2, Check, AlertTriangle, Activity, Search, ArrowRight, RotateCcw, X, LockKeyhole, Clock3, Globe, ExternalLink, Code2, FolderOpen, FileCode2 } from 'lucide-react';
 
@@ -320,6 +320,64 @@ function getScenarioLists(id:ScenarioId):Record<Role,Permission[]>{
  };
 }
 
+
+const key='cantheyseeit-test1-workspaces-v3';
+const SOURCE_DB='cantheyseeit-source-projects';
+const SOURCE_STORE='bundles';
+const CODE_EXTENSIONS=['.ts','.tsx','.js','.jsx','.mjs','.cjs','.html','.htm','.css','.scss','.sass','.json','.md','.mdx','.py','.java','.go','.php','.rb','.vue','.svelte','.sql','.yaml','.yml','.toml','.xml','.sh','.bat','.txt','.env.example'];
+const IGNORE_PARTS=['node_modules/','.git/','dist/','build/','.next/','coverage/','vendor/'];
+const id=()=>Math.random().toString(36).slice(2,10);
+const time=()=>new Date().toLocaleString([],{dateStyle:'medium',timeStyle:'short'});
+function isCodePath(path:string):boolean{
+ const clean=path.split(String.fromCharCode(92)).join('/').toLowerCase();
+ if(IGNORE_PARTS.some(part=>clean.includes(part)))return false;
+ const name=clean.split('/').pop()??'';
+ if(name.startsWith('.')&&!name.startsWith('.env.example'))return false;
+ return CODE_EXTENSIONS.some(ext=>name.endsWith(ext))||['dockerfile','makefile','gemfile'].includes(name);
+}
+function openSourceDb():Promise<IDBDatabase>{
+ return new Promise((resolve,reject)=>{
+  const request=indexedDB.open(SOURCE_DB,1);
+  request.onupgradeneeded=()=>{
+   const db=request.result;
+   if(!db.objectStoreNames.contains(SOURCE_STORE))db.createObjectStore(SOURCE_STORE,{keyPath:'siteId'});
+  };
+  request.onsuccess=()=>resolve(request.result);
+  request.onerror=()=>reject(request.error??new Error('Could not open local source storage'));
+ });
+}
+async function saveSourceBundle(siteId:string,files:SourceFile[]):Promise<void>{
+ const db=await openSourceDb();
+ await new Promise<void>((resolve,reject)=>{
+  const tx=db.transaction(SOURCE_STORE,'readwrite');
+  tx.objectStore(SOURCE_STORE).put({siteId,files});
+  tx.oncomplete=()=>resolve();
+  tx.onerror=()=>reject(tx.error??new Error('Could not save source files'));
+  tx.onabort=()=>reject(tx.error??new Error('Source-file save was cancelled'));
+ });
+ db.close();
+}
+async function readSourceBundle(siteId:string):Promise<SourceFile[]>{
+ const db=await openSourceDb();
+ const files=await new Promise<SourceFile[]>((resolve,reject)=>{
+  const request=db.transaction(SOURCE_STORE,'readonly').objectStore(SOURCE_STORE).get(siteId);
+  request.onsuccess=()=>resolve(Array.isArray(request.result?.files)?request.result.files:[]);
+  request.onerror=()=>reject(request.error??new Error('Could not read source files'));
+ });
+ db.close();
+ return files;
+}
+async function deleteSourceBundle(siteId:string):Promise<void>{
+ const db=await openSourceDb();
+ await new Promise<void>((resolve,reject)=>{
+  const tx=db.transaction(SOURCE_STORE,'readwrite');
+  tx.objectStore(SOURCE_STORE).delete(siteId);
+  tx.oncomplete=()=>resolve();
+  tx.onerror=()=>reject(tx.error??new Error('Could not remove source files'));
+ });
+ db.close();
+}
+
 // Risk is based only on security incidents actually recorded in the activity timeline.
 // Normal role permissions and ordinary permission changes never add risk.
 const incidentImpact:Record<Level,number>={Low:10,Medium:25,High:45,Critical:70};
@@ -403,7 +461,7 @@ export default function App(){
  const visibleEvents=events.filter(event=>timelineFilter==='all'||(timelineFilter==='alerts'?(event.tone==='danger'||event.sample):(/permission|custom permission|role permissions/i.test(event.title)&&event.tone!=='danger'&&!event.sample)));
  const addEvent=(title:string,detail:string,tone:EventItem['tone']='neutral',sample=false,riskImpact=0,riskLevel?:Level)=>setEvents(v=>[{id:id(),time:time(),title,detail,tone,sample,riskImpact,riskLevel},...v].slice(0,60));
  function changePermission(item:Permission){if(!role||!selected)return;const next=!item.enabled;setLists(v=>({...v,[role]:v[role].map(x=>x.id===item.id?{...x,enabled:next}:x)}));addEvent(`${next?'Permission granted':'Permission removed'}: ${item.title}`,`${selected.name} · ${item.description}`,'safe');setToast(next?'Permission granted':'Permission removed')}
- function addCustom(){if(!role||!title.trim())return;const item:Permission={id:`custom-${id()}`,title:title.trim(),description:desc.trim()||'Custom permission added by an administrator.',group:'Custom permissions',risk:'Medium',enabled:true,custom:true};setLists(v=>({...v,[role]:[...v[role],item]}));addEvent(`Custom permission added: ${item.title}`,`${selected?.name} · Sensitivity marked ${level}`,'neutral');setTitle('');setDesc('');setAdd(false);setToast('Permission added')}
+ function addCustom(){if(!role||!title.trim())return;const item:Permission={id:`custom-${id()}`,title:title.trim(),description:desc.trim()||'Custom permission added by an administrator.',group:'Custom permissions',risk:'Medium',enabled:true,custom:true};setLists(v=>({...v,[role]:[...v[role],item]}));addEvent(`Custom permission added: ${item.title}`,`${selected?.name} · Added to this role`,'neutral');setTitle('');setDesc('');setAdd(false);setToast('Permission added')}
  function removeCustom(item:Permission){if(!role)return;setLists(v=>({...v,[role]:v[role].filter(x=>x.id!==item.id)}));addEvent(`Permission deleted: ${item.title}`,`${selected?.name} · Removed from this role`);setToast('Permission deleted')}
  function reset(){if(!role)return;setLists(v=>({...v,[role]:structuredClone(templates[role])}));addEvent('Role permissions reset',`${selected?.name} restored to the starter template`);setToast('Role restored')}
  function sample(){const denied=selectedScenario?.cases.find(test=>test.outcome==='DENY');const example=denied?.title??'A user attempted an action outside their allowed permissions';addEvent('Unexpected access attempt (simulated)',`${selectedScenario?.title??'Selected scenario'}: ${example}. This simulated event was added to the timeline; it is not a live request.`,'danger',true,incidentImpact.High,'High');setToast('Simulated incident added to timeline')}
