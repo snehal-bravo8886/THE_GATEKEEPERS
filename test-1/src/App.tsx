@@ -588,7 +588,7 @@ export default function App(){
     <span className="drop-icon"><Globe size={25}/></span><b>{isDragging?'Drop your website link here':'Drag & drop your website link here'}</b><p>Drag a URL from your browser address bar, or paste/type it below.</p>
    </div>
    <div className="target-fields single">
-    <label>Website address<input value={siteUrlInput} onChange={e=>setSiteUrlInput(e.target.value)} onDragOver={e=>e.preventDefault()} onDrop={handleWebsiteDrop} placeholder="https://your-website.com" inputMode="url"/><small>Examples: https://my-site.com or http://localhost:3000</small></label>
+    <label>Website address<input value={siteUrlInput} onChange={e=>setSiteUrlInput(e.target.value)} onDragOver={e=>e.preventDefault()} onDrop={handleWebsiteDrop} placeholder="https://your-website.com" inputMode="url"/><small>Examples: https://my-site.com or http://127.0.0.1:3000</small></label>
    </div>
   </>:<>
    <div className={isDragging?'dropzone source-dropzone dragging':'dropzone source-dropzone'} onDragOver={e=>{e.preventDefault();setIsDragging(true)}} onDragLeave={e=>{if(e.currentTarget===e.target)setIsDragging(false)}} onDrop={handleSourceDrop}>
