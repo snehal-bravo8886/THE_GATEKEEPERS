@@ -128,3 +128,18 @@
 .timeline .heading{margin-bottom:14px}
 .risk-method summary:hover,.timeline-tabs button:hover{color:#2879c8}
 @media(max-width:650px){.risk-metrics{grid-template-columns:1fr 1fr 1fr;gap:5px}.risk-metrics span{padding:8px 6px}.risk-metrics b{font-size:15px}.risk-metrics small{font-size:8px}.timeline-tools{align-items:stretch;flex-direction:column}.timeline-tools .actions{width:100%}.timeline-tools .actions button{flex:1}}
+
+/* Incident-only risk panel sits directly beside the activity timeline. */
+.dashboard-activity-grid{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(270px,.8fr);gap:15px;align-items:start;margin-top:15px}
+.dashboard-activity-grid .timeline,.dashboard-activity-grid .risk-card{margin:0;min-width:0}
+.dashboard-activity-grid .risk-card .risk-summary{align-items:center;gap:13px}
+.dashboard-activity-grid .risk-card .donut{width:112px;height:112px;flex:none}
+.dashboard-activity-grid .risk-card .donut:before{inset:8px}
+.dashboard-activity-grid .risk-card .risk-metrics{grid-template-columns:1fr 1fr 1fr;gap:6px}
+.dashboard-activity-grid .risk-card .risk-metrics span{padding:8px 6px}
+.dashboard-activity-grid .risk-card .risk-metrics b{font-size:15px}
+.risk.none{background:#eaf7f1;color:#27966d}
+.donut{background:conic-gradient(#db626b 0 var(--score),#edf1f5 var(--score) 100%)}
+.timeline-tools .actions{flex-wrap:wrap}
+@media(max-width:900px){.dashboard-activity-grid{grid-template-columns:1fr}.dashboard-activity-grid .risk-card .risk-summary{justify-content:flex-start}.dashboard-activity-grid .risk-card .risk-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:580px){.dashboard-activity-grid .risk-card .risk-metrics{gap:5px}.dashboard-activity-grid .risk-card .risk-metrics span{padding:7px 5px}.dashboard-activity-grid .risk-card .risk-metrics small{font-size:8px}}
