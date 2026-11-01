@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f8f4ee">
+  <title>Thread & Thimble — Dress Shop</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="announcement">A little style, a lot of heart · Free delivery on orders over ₹1,999</div>
+  <header class="site-header">
+    <a class="brand" href="/" aria-label="Thread and Thimble home">
+      <span class="brand-mark">T<span>&</span>T</span>
+      <span><strong>THREAD <em>&</em> THIMBLE</strong><small>THE LITTLE DRESS SHOP</small></span>
+    </a>
+    <nav class="main-nav"><a href="#collection">Collection</a><a href="#orders">My orders</a><a href="#security-lab">Security lab</a></nav>
+    <div class="account-area">
+      <label class="sr-only" for="account-select">Demo account</label>
+      <select id="account-select">
+        <option value="alice">Alice · Customer</option>
+        <option value="bob">Bob · Customer</option>
+        <option value="maya">Maya · Employee</option>
+        <option value="owner">Shop Owner · Owner</option>
+      </select>
+      <button id="login-button" class="button button-dark">Sign in</button>
+      <button id="logout-button" class="button button-quiet hidden">Sign out</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">NEW SEASON · EVERYDAY ELEGANCE</p>
+        <h1>Wear what<br><i>feels like you.</i></h1>
+        <p class="hero-text">Thoughtful pieces, easy silhouettes and little details that make an ordinary day feel special.</p>
+        <a class="button button-dark" href="#collection">Explore the collection <span>↗</span></a>
+        <div class="hero-note"><span class="dot"></span> Small-batch styles · Made for everyday</div>
+      </div>
+      <div class="hero-art" aria-label="Illustration of a dress on a clothing rack">
+        <div class="sun-disc"></div><div class="hanger">⌁</div><div class="dress-shape"><div class="dress-neck"></div><div class="dress-belt"></div></div>
+        <div class="art-caption">THE EVERYDAY EDIT<br><b>Vol. 04 — 2026</b></div>
+        <div class="art-sticker">made<br>with love <span>✳</span></div>
+      </div>
+    </section>
+
+    <section id="collection" class="section collection-section">
+      <div class="section-heading"><div><p class="eyebrow">FIND YOUR FAVOURITE</p><h2>The collection</h2></div><span class="muted" id="product-count">A few good things, just for you.</span></div>
+      <div id="product-grid" class="product-grid"></div>
+    </section>
+
+    <section class="account-strip">
+      <div><p class="eyebrow">DEMO SHOP ACCOUNT</p><h2 id="welcome-title">You're browsing as Alice</h2><p id="welcome-copy">Sign in with another demo account to compare what each shop role can do.</p></div>
+      <div class="account-pill" id="role-pill">CUSTOMER ACCOUNT</div>
+    </section>
+
+    <section id="orders" class="section orders-section">
+      <div class="section-heading"><div><p class="eyebrow">YOUR ACCOUNT</p><h2>Orders</h2></div><span class="muted">Customer accounts should only see their own orders.</span></div>
+      <div id="orders-list" class="orders-list"><p class="empty-state">Sign in to view orders.</p></div>
+    </section>
+
+    <section id="security-lab" class="section lab-section">
+      <div class="lab-heading">
+        <div><p class="eyebrow">LOCAL TRAINING ENVIRONMENT</p><h2>Security test bench</h2><p class="lab-intro">These buttons send requests to this demo shop's own local server. The weaknesses are intentional, so you can see what broken access control looks like.</p></div>
+        <div class="lab-warning"><span>⚠</span><b>LOCAL DEMO ONLY</b><small>Never deploy this vulnerable app or use these tests on a real shop.</small></div>
+      </div>
+      <div class="test-grid">
+        <article class="test-card"><div class="test-number">01</div><p class="eyebrow">OBJECT-LEVEL ACCESS</p><h3>Can Alice see Bob's order?</h3><p>As Alice, request order <code>#1002</code>, which belongs to Bob. The server should deny this.</p><div class="test-meta"><span>Expected: <b class="deny">DENY</b></span><span>Demo result: <b class="bad">VULNERABLE</b></span></div><button class="button button-outline test-button" id="test-idor">Run order privacy test</button></article>
+        <article class="test-card"><div class="test-number">02</div><p class="eyebrow">ROLE-BASED ACCESS</p><h3>Can a customer edit stock?</h3><p>As Alice, try changing the first product's price to ₹1 and stock to 999. Only the owner should edit price; stock should be limited to staff.</p><div class="test-meta"><span>Expected: <b class="deny">DENY</b></span><span>Demo result: <b class="bad">VULNERABLE</b></span></div><button class="button button-outline test-button" id="test-role">Run inventory permission test</button></article>
+        <article class="test-card"><div class="test-number">03</div><p class="eyebrow">BUSINESS-LOGIC VALIDATION</p><h3>Can checkout accept ₹1?</h3><p>As Alice, submit a checkout request with a made-up unit price of ₹1 instead of the catalogue price.</p><div class="test-meta"><span>Expected: <b class="deny">REJECT / RECALCULATE</b></span><span>Demo result: <b class="bad">VULNERABLE</b></span></div><button class="button button-outline test-button" id="test-price">Run checkout price test</button></article>
+      </div>
+      <div class="lab-controls"><button id="reset-button" class="button button-dark">Reset demo data</button><span>Reset restores the original sample products and orders.</span></div>
+      <div class="results-panel"><div class="results-title"><div><p class="eyebrow">LIVE RESPONSE</p><h3>Test results</h3></div><button class="text-button" id="clear-results">Clear log</button></div><pre id="test-output" aria-live="polite">Ready. Sign in as Alice and run test 01 to begin.</pre></div>
+    </section>
+  </main>
+
+  <footer><a class="brand footer-brand" href="/"><span class="brand-mark">T<span>&</span>T</span><span><strong>THREAD <em>&</em> THIMBLE</strong><small>THE LITTLE DRESS SHOP</small></span></a><p>Made-up shop · Fake accounts · Local security learning lab</p><p class="footer-right">© 2026 Thread & Thimble</p></footer>
+  <script src="/app.js"></script>
+</body>
+</html>
