@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="theme-color" content="#faf9f6"/>
+  <title>CanTheySeeIt? — Check your website</title>
+  <link rel="stylesheet" href="/styles.css"/>
+  <link rel="stylesheet" href="/experience.css"/>
+  <link rel="stylesheet" href="/soft-light.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;450;500;550;600;650;700&family=Lora:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="/studio-light.css"/>
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 28 28" fill="none"><path d="m14 2 10 4v7c0 7-4.7 10.7-10 13C8.7 23.7 4 20 4 13V6l10-4Z" stroke="currentColor" stroke-width="1.8"/><path d="m9 14 3 3 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div><div class="brand-title">CanTheySeeIt<span class="brand-q">?</span></div><div class="brand-subtitle">A little peace of mind</div></div>
+      </div>
+      <div class="sidebar-section-label">Workspace</div>
+      <nav class="navigation" aria-label="Main navigation">
+        <button class="nav-item active" data-route="workspace"><span class="nav-icon" data-icon="shield-check"></span><span>New website check</span></button>
+        <button class="nav-item" data-route="history"><span class="nav-icon" data-icon="history"></span><span>Previous checks</span></button>
+        <button class="nav-item" data-route="guide"><span class="nav-icon" data-icon="book-open"></span><span>Help</span></button>
+      </nav>
+      <details class="sidebar-advanced" id="sidebar-advanced">
+        <summary>More tools <span aria-hidden="true">⌄</span></summary>
+        <nav class="navigation" aria-label="Advanced tools">
+          <button class="nav-item" data-route="overview"><span class="nav-icon" data-icon="layout-dashboard"></span><span>Overview</span></button>
+          <button class="nav-item" data-route="suites"><span class="nav-icon" data-icon="layers"></span><span>Security promises</span></button>
+          <button class="nav-item" data-route="verify"><span class="nav-icon" data-icon="scan"></span><span>Live verification</span></button>
+          <button class="nav-item" data-route="findings"><span class="nav-icon" data-icon="shield-alert"></span><span>Technical findings</span><span class="nav-count" id="nav-fail-count" hidden>0</span></button>
+          <button class="nav-item" data-route="connections"><span class="nav-icon" data-icon="plug"></span><span>Connections</span></button>
+        </nav>
+      </details>
+      <div class="sidebar-spacer"></div>
+      <div class="sidebar-target">
+        <div class="sidebar-target-icon"><span data-icon="shopping-bag"></span></div>
+        <div class="sidebar-target-text"><strong>Sprout & Stone</strong><span>Local grocery lab</span></div>
+        <span class="target-dot" id="sidebar-target-dot" title="Checking target"></span>
+      </div>
+      <div class="sidebar-bottom"><div class="avatar">TG</div><div><strong>The Gatekeepers</strong><span>Kodikon 6.0 · Local demo</span></div><span class="sidebar-bottom-icon" data-icon="chevrons-up-down"></span></div>
+    </aside>
+
+    <div class="main-container">
+      <header class="topbar">
+        <button id="mobile-menu" class="icon-btn mobile-only" aria-label="Toggle menu"><span data-icon="menu"></span></button>
+        <div class="topbar-breadcrumb"><span>CanTheySeeIt?</span><span data-icon="chevron-right"></span><strong id="crumb">Start here</strong></div>
+        <div class="topbar-actions"><div class="env-chip"><span class="live-dot" id="topbar-live-dot"></span><span id="topbar-target-label">Checking local target</span></div><button class="icon-btn" id="header-refresh" title="Refresh data" aria-label="Refresh data"><span data-icon="refresh-cw"></span></button><div class="top-avatar">TG</div></div>
+      </header>
+
+      <main class="main-content" id="main">
+        <section class="page" data-page="workspace">
+          <section class="experience-hero" aria-labelledby="experience-title">
+            <div class="experience-hero-copy">
+              <div class="experience-hero-kicker">A website checkup</div>
+              <h1 id="experience-title">Does your website do<br/><em>what you intended?</em></h1>
+              <p>Choose the parts of your site that should stay private. We'll help you check what works, what needs attention, and what we couldn't verify.</p>
+              <div class="experience-hero-footnote">Built for people who make websites, not security experts.</div>
+            </div>
+          </section>
+          <div class="experience-progress" id="workspace-progress" aria-label="Four steps to check your website">
+            <div class="experience-progress-step active" data-progress-step="1"><span>1</span><strong>Add your website</strong></div>
+            <span class="progress-line"></span><div class="experience-progress-step" data-progress-step="2"><span>2</span><strong>Tell us your rules</strong></div>
+            <span class="progress-line"></span><div class="experience-progress-step" data-progress-step="3"><span>3</span><strong>Check it</strong></div>
+            <span class="progress-line"></span><div class="experience-progress-step" data-progress-step="4"><span>4</span><strong>Understand results</strong></div>
+          </div>
+          <div class="experience-layout">
+            <div class="experience-main-column">
+              <section class="experience-card" id="workspace-section-upload" aria-labelledby="experience-upload-title">
+                <div class="experience-card-heading"><span class="experience-card-num">01</span><div><div class="experience-card-overline">YOUR WEBSITE</div><h2 id="experience-upload-title">Which website are we checking?</h2><p>We can start with a link or a website file.</p></div></div>
+                <div class="site-input-toggle" role="group" aria-label="How do you want to add your website?">
+                  <button type="button" id="workspace-mode-zip" class="site-mode" aria-pressed="false">Upload website ZIP</button>
+                  <button type="button" id="workspace-mode-link" class="site-mode active" aria-pressed="true">Enter website link</button>
+                </div>
+                <div id="workspace-link-form" class="site-link-form">
+                  <div class="sector-step-head"><span class="sector-step-bubble">A</span><div><strong>Which kind of website is it?</strong><small>Pick the closest match. You can always change it.</small></div></div>
+                  <div id="workspace-sector-cards" class="sector-grid" role="radiogroup" aria-label="Choose website category"><p class="workspace-muted">Loading website categories…</p></div>
+                  <div id="workspace-sector-options" class="sector-options" hidden>
+                    <div class="sector-step-head"><span class="sector-step-bubble">B</span><div><strong>What can people do on your website?</strong><small>Tick all the features your site includes. We’ll suggest extra checks from these choices.</small></div></div>
+                    <div id="workspace-sector-features" class="sector-feature-list"></div>
+                    <div class="sector-step-head"><span class="sector-step-bubble">C</span><div><strong>What rules should your website follow?</strong><small>Choose the protections that matter. No technical terms needed.</small></div></div>
+                    <div id="workspace-core-rules" class="sector-feature-list"></div>
+                  </div>
+                  <div class="sector-link-entry">
+                    <label for="workspace-link-url"><strong>D · Where can we find your website?</strong><span>Paste its link. We only prepare a plan for unfamiliar websites — we never scan them.</span></label>
+                    <input id="workspace-link-url" class="field-input" type="url" maxlength="400" placeholder="https://my-website.example" autocomplete="url" spellcheck="false" />
+                    <input type="hidden" id="workspace-link-description" value="" />
+                  </div>
+                  <div class="site-link-actions"><button type="button" id="workspace-plan-link" class="btn btn-primary">Show my recommended checks <span aria-hidden="true">→</span></button><button type="button" id="workspace-use-hospital" class="btn btn-outline">Try the clinic example</button></div>
+                  <p class="sector-feedback" id="workspace-sector-feedback" aria-live="polite">Choose a category to see relevant options.</p>
+                  <div id="workspace-link-plan" class="site-link-plan" aria-live="polite"></div>
+                  <p class="experience-scope-note">Links to unfamiliar sites produce a proposed plan only, not a security result. Live testing requires an explicitly approved local test environment with fictional users and records. Never upload real patient, payment, or student records.</p>
+                </div>
+                <div id="workspace-zip-form" hidden>
+                <label class="sector-zip-label" for="workspace-zip-category">Choose the type of website you built</label>
+                <select id="workspace-zip-category" class="sector-zip-select" aria-label="Sector for uploaded website">
+                  <option value="campus">College Events / Fest</option>
+                  <option value="retail">Grocery / Small Retail</option>
+                </select>
+                <p class="experience-scope-note">Upload a matching approved local project ZIP. Its source is inspected; the already running matching app is what gets tested.</p>
+                <label id="workspace-drop" class="experience-drop" for="workspace-file" tabindex="0"><span class="experience-drop-icon" data-icon="database"></span><strong id="workspace-drop-label">Drop your website ZIP here, or browse files</strong><small>ZIP file · up to 8 MB · ZIP is inspected, never executed</small><input id="workspace-file" type="file" accept=".zip,application/zip" hidden/></label>
+                <div class="experience-upload-bottom"><div id="workspace-upload-state" class="workspace-upload-state" aria-live="polite">No website selected yet.</div><button id="workspace-use-sample" class="experience-sample-button" type="button">Use the sample grocery shop <span aria-hidden="true">↗</span></button><a class="experience-sample-button" style="margin-left:12px" href="/api/workspace/fest-sample-zip" download="AetherFest_Approved_Website.zip">Get College Fest ZIP ↗</a></div>
+                <p class="experience-scope-note"><span data-icon="info"></span> <span><strong>Supported in this version:</strong> the local Sprout & Stone grocery shop and the AETHER college fest. Other ZIPs are safely rejected until an adapter is added. <a href="/api/workspace/sample-zip" download="SproutStone_Approved_Website.zip">Download sample ZIP</a>.</span></p>
+                </div>
+              </section>
+              <section class="experience-card" id="workspace-section-rules" aria-labelledby="experience-rules-title">
+                <div class="experience-card-heading"><span class="experience-card-num">02</span><div><div class="experience-card-overline">YOUR EXPECTATIONS</div><h2 id="experience-rules-title">What should stay private?</h2><p>Pick the rules that matter to you. You can change them before running a check.</p></div></div>
+                <details class="experience-prompt-disclosure"><summary>Optional: I have my original AI prompt</summary><div class="experience-prompt-panel"><label for="workspace-prompt"><span data-icon="sparkles"></span> Have your original AI prompt? <span class="experience-optional">OPTIONAL</span></label><textarea id="workspace-prompt" rows="3" maxlength="1200" placeholder="Example: Build a grocery shop where customers can see only their own orders and only the owner can change store settings."></textarea><div class="experience-prompt-actions"><span>We can suggest checks from your description. You'll always choose what to test.</span><button class="btn btn-outline" id="workspace-suggest" type="button">Suggest rules <span data-icon="arrow-right"></span></button></div><div class="experience-prompt-note" id="workspace-prompt-note" aria-live="polite"></div></div>
+                </details><div class="experience-subheading"><strong>Review your checks</strong><span id="workspace-rules-label">4 easy-to-understand options</span></div>
+                <div id="workspace-rules" class="experience-rule-grid"><p class="workspace-muted">Loading the supported permission checks…</p></div>
+                <div id="workspace-selection-summary" class="experience-selection-summary">Choose at least one rule to continue.</div>
+              </section>
+              <section class="experience-card" id="workspace-section-run" aria-labelledby="experience-run-title">
+                <div class="experience-card-heading"><span class="experience-card-num">03</span><div><div class="experience-card-overline">REAL VERIFICATION</div><h2 id="experience-run-title">Ready to check?</h2><p>For supported sites, we check how the website actually behaves.</p></div></div>
+                <div class="experience-run-preflight"><span data-icon="shield-check"></span><div><strong>Safe, controlled checks</strong><p>We use fictional accounts and records. We won't try tests against an unapproved website.</p></div></div>
+                <label class="workspace-consent experience-consent"><input id="workspace-write-approval" type="checkbox"/><span><strong>Allow safe changes to test accounts</strong><small>If selected, editing checks temporarily modify and restore FICTIONAL local test records. Never run against real patient data.</small></span></label>
+                <details class="experience-advanced"><summary>Advanced: label this run</summary><label class="field-label" for="workspace-revision">TEST RUN LABEL</label><input id="workspace-revision" class="field-input" maxlength="100" value="grocery-demo-v1" placeholder="Version name" autocomplete="off"/><p>This is only a label. It never changes the actual security result.</p></details>
+                <div id="workspace-readiness" class="workspace-readiness" role="status">Checking whether the local grocery site is running…</div>
+                <div id="workspace-error" class="workspace-error-msg" role="alert" hidden></div>
+                <button id="workspace-run" class="btn btn-primary btn-block experience-run-button" type="button" disabled>Check my website <span data-icon="arrow-right"></span></button>
+                <p class="experience-honest-note">A successful check means only the selected rules were verified, not that every part of the website is secure.</p>
+              </section>
+            </div>
+            <aside class="experience-rail" aria-label="Helpful explanations">
+              <div class="experience-rail-card"><span class="experience-rail-eyebrow">THE IDEA</span><h3>From a rule to a real check.</h3><p>You tell us who should have access. We test the supported website and explain the result.</p><div class="experience-rail-illustration" aria-hidden="true"><div>“Only I can see my orders.”</div><span>↓</span><div class="rail-answer">Check from another account <span>✓</span></div></div><div class="experience-rail-footer">We only call a check “passed” when we have enough evidence.</div></div>
+              <div class="experience-rail-card soft"><span class="experience-rail-eyebrow">READING YOUR RESULTS</span><div class="experience-legend-row"><span class="experience-legend-icon pass">✓</span><div><strong>Working as expected</strong><small>The selected rule held under valid test conditions.</small></div></div><div class="experience-legend-row"><span class="experience-legend-icon fail">!</span><div><strong>Needs fixing</strong><small>We confirmed that a rule was broken.</small></div></div><div class="experience-legend-row"><span class="experience-legend-icon uncertain">?</span><div><strong>Couldn't confirm</strong><small>The check lacked sufficient evidence. This isn't a pass.</small></div></div></div>
+              <div class="experience-rail-help" id="workspace-rail-help"><span data-icon="shopping-bag"></span><div><strong>Using a sample website?</strong><p>Start it in another terminal with <code>npm.cmd run lab:start</code>. Our checker runs at <strong>:4100</strong> and the sample shop at <strong>:4200</strong>.</p></div></div>
+            </aside>
+          </div>
+          <section id="workspace-results" class="experience-results" hidden aria-live="polite">
+            <div class="experience-results-heading"><span class="experience-card-num result-num">04</span><div><div class="experience-card-overline">YOUR RESULTS</div><h2 id="workspace-human-headline">Here's what we found.</h2><p id="workspace-results-meta">Evidence from the live verification engine.</p></div></div>
+            <div id="workspace-results-summary"></div>
+            <div class="experience-results-toolbar"><strong>What happened, in plain English</strong><span id="workspace-results-caption">Choose a finding for more details.</span></div>
+            <div id="workspace-results-list"></div>
+            <div class="experience-results-actions"><button class="btn btn-primary" type="button" id="workspace-download">Download easy-to-read report <span data-icon="arrow-right"></span></button><button class="btn btn-outline" type="button" data-route="history">Previous checks</button><button class="btn btn-quiet" type="button" data-route="findings">Technical evidence</button></div>
+            <p class="experience-results-disclaimer">These results cover only the selected permission promises and verified test data. They do not certify the entire website.</p>
+          </section>
+        </section>
+
+        <section class="page" data-page="overview">
+          <div class="page-title-row"><div><div class="eyebrow">SECURITY CONTROL CENTER <span class="eyebrow-line"></span> SUPPORTED LOCAL TARGET</div><h1>Your promises. <em>Proven.</em></h1><p class="page-lead">Turn security requirements into real HTTP checks, without guessing whether an access rule actually works.</p></div><button class="btn btn-quiet" id="overview-refresh"><span data-icon="refresh-cw"></span>Refresh status</button></div>
+          <div class="hero">
+            <div class="hero-copy"><div class="hero-tag"><span data-icon="sparkles"></span> LIVE SECURITY VERIFICATION</div><h2>Find the access<br/><span>that shouldn't exist.</span></h2><p>Verify customer privacy and admin permissions against the real Sprout & Stone demo app. Review every finding with evidence.</p><div class="hero-actions"><button class="btn btn-lime" data-route="workspace"><span data-icon="play"></span>Guided verification<span data-icon="arrow-up-right"></span></button><button class="hero-link" data-route="suites">Explore test suites <span data-icon="arrow-right"></span></button></div></div>
+            <div class="hero-art" aria-hidden="true"><div class="art-ring art-ring-1"></div><div class="art-ring art-ring-2"></div><div class="art-ring art-ring-3"></div><div class="hero-shield"><svg viewBox="0 0 120 142" fill="none"><path d="M60 5 110 24v40c0 33-22 55-50 69C32 119 10 97 10 64V24L60 5Z" fill="#86ADBB" fill-opacity=".14" stroke="#86ADBB" stroke-width="2.8"/><path d="m37 70 15 15 32-36" stroke="#86ADBB" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="float-card float-one"><span class="fc-dot green"></span> ACCESS CONTROL</div><div class="float-card float-two"><span class="fc-dot pale"></span> EVIDENCE VERIFIED</div></div>
+          </div>
+          <div class="metric-grid" id="metrics"></div>
+          <div class="two-panel-grid">
+            <section class="surface-panel"><div class="section-heading"><div><h3>Security promises</h3><p>Approved suites connected to this test environment</p></div><button class="text-action" data-route="suites">View all <span data-icon="arrow-right"></span></button></div><div id="overview-suites"></div></section>
+            <section class="surface-panel"><div class="section-heading"><div><h3>Recent activity</h3><p>Only actual executed verification runs appear here</p></div><button class="text-action" data-route="history">History <span data-icon="arrow-right"></span></button></div><div id="overview-history"></div></section>
+          </div>
+          <div class="workflow-strip"><div class="workflow-text"><div class="eyebrow">HOW IT WORKS</div><h3>From promise to proof.</h3></div><div class="workflow-steps"><div><span class="step-number">01</span><strong>Confirm a rule</strong><small>Pick a reviewed test suite</small></div><span class="workflow-arrow" data-icon="arrow-right"></span><div><span class="step-number">02</span><strong>Run real checks</strong><small>Approved synthetic requests</small></div><span class="workflow-arrow" data-icon="arrow-right"></span><div><span class="step-number">03</span><strong>Inspect the evidence</strong><small>PASS, FAIL or INCONCLUSIVE</small></div></div></div>
+        </section>
+
+        <section class="page" data-page="suites"><div class="page-title-row"><div><div class="eyebrow">REVIEWED SECURITY REQUIREMENTS</div><h1>Security promises</h1><p class="page-lead">Every case is tied to a confirmed permission rule and a trusted synthetic fixture.</p></div><button class="btn btn-primary" id="suite-register"><span data-icon="plus"></span>Load demo suites</button></div><div class="info-banner"><span data-icon="info"></span><div>These are <strong>pre-approved Sprout & Stone test contracts</strong>. The current integration uses an app-specific adapter; it does not claim automatic discovery of arbitrary apps.</div></div><div id="suite-list" class="suite-grid"></div><div class="surface-panel" id="suite-details"></div></section>
+
+        <section class="page" data-page="verify"><div class="page-title-row"><div><div class="eyebrow">EXECUTE REAL HTTP REQUESTS</div><h1>Live verification</h1><p class="page-lead">Tests run on the local grocery lab. Verdicts come from the backend, never from UI controls.</p></div></div><div class="verify-layout"><section class="surface-panel run-config"><div class="section-heading"><div><h3>Configure a verification run</h3><p>Choose a registered promise and check target readiness</p></div><span class="config-icon" data-icon="sliders-horizontal"></span></div><label class="field-label" for="suite-picker">SECURITY PROMISE</label><select id="suite-picker" class="field-select"><option value="">No registered suites</option></select><div id="selected-suite-info" class="selected-suite-info"></div><div class="connection-check" id="run-status"></div><button class="btn btn-primary btn-block" id="launch-run"><span data-icon="play"></span>Review & run tests<span data-icon="arrow-right"></span></button><div class="run-privacy"><span data-icon="lock"></span>Write tests require explicit approval. All edits use disposable records and are reset by the trusted adapter.</div></section><section class="surface-panel run-preview"><div class="section-heading"><div><h3>What will be tested?</h3><p>Read & modification permissions for known actors</p></div><span class="small-badge">CONTRACT-DRIVEN</span></div><div id="run-case-preview"></div></section></div><div class="surface-panel latest-results" id="run-latest-results"></div></section>
+
+        <section class="page" data-page="findings"><div class="page-title-row"><div><div class="eyebrow">EVIDENCE-BASED OUTCOMES</div><h1>Findings & results</h1><p class="page-lead">Each result is backed by a real response, fixture evidence, or verified persisted-state change.</p></div><button class="btn btn-quiet" data-route="verify"><span data-icon="play"></span>New run</button></div><div id="findings-summary"></div><div class="surface-panel"><div class="section-heading"><div><h3>Individual test results</h3><p id="findings-subtitle">Select a run to inspect its results</p></div><div class="filters" role="group" aria-label="Filter findings"><button class="filter active" data-filter="ALL">All</button><button class="filter" data-filter="FAIL">Failed</button><button class="filter" data-filter="PASS">Passed</button><button class="filter" data-filter="INCONCLUSIVE">Inconclusive</button></div></div><div id="findings-table"></div></div></section>
+
+        <section class="page" data-page="history"><div class="page-title-row"><div><div class="eyebrow">PERSISTENT SECURITY EVIDENCE</div><h1>Run history</h1><p class="page-lead">Compare results over real backend revisions. A revision label never determines a verdict.</p></div><button class="btn btn-quiet" id="history-refresh"><span data-icon="refresh-cw"></span>Refresh runs</button></div><div class="surface-panel"><div class="section-heading"><div><h3>All verification runs</h3><p>Saved by Suprita's verification API</p></div><span class="small-badge">LOCAL LEDGER</span></div><div id="history-list"></div></div></section>
+
+        <section class="page" data-page="connections"><div class="page-title-row"><div><div class="eyebrow">YOUR VERIFIED ENVIRONMENT</div><h1>Connections</h1><p class="page-lead">See which local training environments and approved adapters are ready to use.</p></div><button class="btn btn-primary" id="connections-refresh"><span data-icon="refresh-cw"></span>Check connections</button></div><div class="connection-grid" id="connection-cards"></div><div class="surface-panel"><div class="section-heading"><div><h3>Integration architecture</h3><p>Approved local synthetic test infrastructure only</p></div></div><div class="architecture"><div><span class="architecture-icon" data-icon="monitor"></span><strong>Dashboard</strong><small>Browser on :4100</small></div><span data-icon="arrow-right"></span><div><span class="architecture-icon" data-icon="server"></span><strong>Verifier API</strong><small>Node / Express on :4100</small></div><span data-icon="arrow-right"></span><div><span class="architecture-icon" data-icon="shopping-bag"></span><strong>Grocery lab</strong><small>Trusted adapter → :4200</small></div></div><p class="architecture-note">Authentication tokens and fixture reset logic remain in the trusted server-side adapter, not in this dashboard.</p></div></section>
+
+        <section class="page" data-page="guide"><div class="page-title-row"><div><div class="eyebrow">MADE FOR DEVELOPERS</div><h1>Getting started</h1><p class="page-lead">A simple, honest workflow to demonstrate real access-control verification.</p></div></div><div class="guide-grid"><section class="surface-panel guide-main"><div class="guide-step"><div class="guide-number">01</div><div><h3>Start the grocery lab</h3><p>Open a terminal at the project root and run the synthetic shop on port 4200.</p><pre><code>npm.cmd run lab:start</code></pre><a href="http://127.0.0.1:4200" target="_blank" rel="noreferrer" class="plain-link">Open grocery storefront <span data-icon="external-link"></span></a></div></div><div class="guide-step"><div class="guide-number">02</div><div><h3>Start the verifier</h3><p>Open a second terminal from the project root. The dashboard and API share port 4100.</p><pre><code>npm.cmd install
+npm.cmd run dev</code></pre></div></div><div class="guide-step"><div class="guide-number">03</div><div><h3>Register reviewed suites</h3><p>Select <strong>Security promises → Load demo suites</strong>. This registers the two bundled, approved JSON contracts using the existing backend API.</p><button class="btn btn-outline" data-action="register">Load demo suites <span data-icon="arrow-right"></span></button></div></div><div class="guide-step"><div class="guide-number">04</div><div><h3>Run and inspect actual evidence</h3><p>Select a suite, review its permission rules, explicitly approve disposable synthetic updates, and run. Findings and history come from the verifier's saved results.</p><button class="btn btn-outline" data-route="verify">Go to verification <span data-icon="arrow-right"></span></button></div></div></section><aside class="surface-panel guide-side"><div class="guide-side-icon"><span data-icon="shield-check"></span></div><h3>What this demo proves</h3><p>Tests observe actual HTTP responses, verified customer identity, protected synthetic markers, and before/after state changes.</p><div class="guide-separator"></div><h4>Real limitations</h4><ul><li>Two local training adapters are supported: Sprout & Stone grocery and CareBridge fictional hospital. Other links are planning-only.</li><li>The intentionally insecure grocery lab must never be publicly deployed.</li><li>G11/G12 fault-injection cases are not integrated into this archive.</li><li>Write tests need explicit approval and trusted reset.</li><li>Automated code repair or deployment is not included.</li></ul></aside></div></section>
+      </main>
+      <footer class="main-footer"><span>CanTheySeeIt? <span class="footer-dot">•</span> The Gatekeepers · Kodikon 6.0</span><span>Local synthetic security testing only <span data-icon="lock"></span></span></footer>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="run-modal" hidden><div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal-header"><div class="modal-emblem" data-icon="shield-check"></div><button class="icon-btn" data-action="close-modal" aria-label="Close"><span data-icon="x"></span></button></div><h2 id="modal-title">Confirm verification run</h2><p id="modal-desc" class="modal-subtitle">The trusted adapter will execute the selected test contract against synthetic lab data.</p><div class="modal-summary" id="modal-summary"></div><label class="field-label" for="revision-label">REVISION LABEL</label><input id="revision-label" class="field-input" maxlength="100" placeholder="e.g. v1-vulnerable" value="demo-local"/><label class="consent"><input type="checkbox" id="approve-writes"/><span><strong>I approve synthetic write tests</strong><small>These PATCH requests may temporarily change disposable address, inventory or shop settings data. The adapter will attempt to restore it.</small></span></label><div class="modal-footer"><button class="btn btn-outline" data-action="close-modal">Cancel</button><button class="btn btn-primary" id="confirm-run"><span data-icon="play"></span>Run verified checks</button></div></div></div>
+  <div class="modal-backdrop" id="detail-modal" hidden><div class="modal detail-modal" role="dialog" aria-modal="true" aria-labelledby="detail-title"><div class="modal-header"><div class="modal-emblem" data-icon="search-check"></div><button class="icon-btn" data-action="close-modal" aria-label="Close"><span data-icon="x"></span></button></div><h2 id="detail-title">Test evidence</h2><div id="detail-content"></div><div class="modal-footer"><button class="btn btn-outline" data-action="close-modal">Close</button></div></div></div>
+  <div class="toast-stack" id="toast-stack" aria-live="polite"></div>
+</body>
+</html>

@@ -1,0 +1,14 @@
+{
+  "suiteId": "aetherfest-college-security-v1",
+  "title": "AETHER College Fest — student privacy and head-only pricing",
+  "originalRequirement": "Only a student may read their own private registration; only the fest head may change public event settings and ticket pricing. This test uses isolated, fictional accounts and records.",
+  "targetProfileId": "aetherfest-college-lab",
+  "confirmed": true,
+  "cases": [
+    {"testId":"F01","actorRef":"student-a","resourceRef":"reg-a-1001","operationRef":"registration.read","method":"GET","expectation":"ALLOW","requiredControls":[],"acceptedDenialStatuses":[]},
+    {"testId":"F02","actorRef":"student-b","resourceRef":"reg-b-1002","operationRef":"registration.read","method":"GET","expectation":"ALLOW","requiredControls":[],"acceptedDenialStatuses":[]},
+    {"testId":"F03","actorRef":"student-a","resourceRef":"reg-b-1002","operationRef":"registration.read","method":"GET","expectation":"DENY","requiredControls":["F01","F02"],"acceptedDenialStatuses":[403]},
+    {"testId":"F04","actorRef":"head","resourceRef":"fest-settings","operationRef":"fest.settings.update","method":"PATCH","mutationRef":"fest.head.price","expectation":"ALLOW","requiredControls":[],"acceptedDenialStatuses":[]},
+    {"testId":"F05","actorRef":"student-b","resourceRef":"fest-settings","operationRef":"fest.settings.update","method":"PATCH","mutationRef":"fest.student.price","expectation":"DENY","requiredControls":["F02","F04"],"acceptedDenialStatuses":[403]}
+  ]
+}

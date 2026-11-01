@@ -1,0 +1,13 @@
+{
+  "projectId": "aetherfest-college-lab",
+  "projectName": "AETHER — College Fest 2026",
+  "category": "campus",
+  "testOnly": true,
+  "approvedLocalOrigin": "http://127.0.0.1:4400/",
+  "fixtures": {
+    "ownerA": {"id": "reg-a-1001", "actor": "student-a"},
+    "ownerB": {"id": "reg-b-1002", "actor": "student-b"},
+    "festHead": {"actor": "head", "settingsId": "fest-settings"}
+  },
+  "riskNote": "Local synthetic training app contains intentional authorization errors. Never deploy publicly."
+}
