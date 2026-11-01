@@ -1,0 +1,12 @@
+{
+  "name": "thread-and-thimble-security-lab",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A local-only dress shop demo with intentional security flaws for educational testing.",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
