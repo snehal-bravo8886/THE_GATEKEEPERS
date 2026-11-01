@@ -1,0 +1,16 @@
+{
+  "name": "aetherfest-college-security-lab",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Local-only fictional college fest application for authorization-verification demonstrations",
+  "scripts": {
+    "start": "node src/server.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "test:exposure": "node scripts/reproduce-bugs.mjs",
+    "test:platform": "node scripts/check-platform.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

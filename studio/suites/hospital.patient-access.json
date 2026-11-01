@@ -1,0 +1,22 @@
+{
+  "suiteId":"carebridge-patient-privacy-v1",
+  "title":"CareBridge fictional patient records: ownership and clinical roles",
+  "originalRequirement":"Patients may view or update only their own personal record; an assigned clinician can view the assigned record; only administrators change hospital settings; visitors must not view patient information; a patient cannot view another person's file.",
+  "targetProfileId":"carebridge-local-hospital-lab",
+  "confirmed":true,
+  "cases":[
+    {"testId":"H01","actorRef":"patient-a","resourceRef":"record-a-101","operationRef":"patient.read","method":"GET","expectation":"ALLOW","requiredControls":[],"acceptedDenialStatuses":[]},
+    {"testId":"H02","actorRef":"patient-b","resourceRef":"record-b-102","operationRef":"patient.read","method":"GET","expectation":"ALLOW","requiredControls":[],"acceptedDenialStatuses":[]},
+    {"testId":"H03","actorRef":"patient-b","resourceRef":"record-a-101","operationRef":"patient.read","method":"GET","expectation":"DENY","requiredControls":["H01","H02"],"acceptedDenialStatuses":[403]},
+    {"testId":"H04","actorRef":"anonymous","resourceRef":"record-a-101","operationRef":"patient.read","method":"GET","expectation":"DENY","requiredControls":["H01"],"acceptedDenialStatuses":[401]},
+    {"testId":"H05","actorRef":"patient-a","resourceRef":"record-a-101","operationRef":"patient.edit","method":"PATCH","mutationRef":"patient.contact.own","expectation":"ALLOW","requiredControls":["H01"],"acceptedDenialStatuses":[]},
+    {"testId":"H06","actorRef":"patient-b","resourceRef":"record-a-101","operationRef":"patient.edit","method":"PATCH","mutationRef":"patient.contact.cross","expectation":"DENY","requiredControls":["H01","H02"],"acceptedDenialStatuses":[403]},
+    {"testId":"H07","actorRef":"clinician-1","resourceRef":"record-a-101","operationRef":"patient.read","method":"GET","expectation":"ALLOW","requiredControls":["H01"],"acceptedDenialStatuses":[]},
+    {"testId":"H08","actorRef":"patient-a","resourceRef":"record-a-101","operationRef":"patient.edit","method":"PATCH","mutationRef":"patient.clinical.denied","expectation":"DENY","requiredControls":["H01"],"acceptedDenialStatuses":[403]},
+    {"testId":"H09","actorRef":"hospital-admin","resourceRef":"hospital-settings","operationRef":"admin.edit","method":"PATCH","mutationRef":"admin.settings.approved","expectation":"ALLOW","requiredControls":[],"acceptedDenialStatuses":[]},
+    {"testId":"H10","actorRef":"patient-b","resourceRef":"hospital-settings","operationRef":"admin.edit","method":"PATCH","mutationRef":"admin.settings.denied","expectation":"DENY","requiredControls":["H02"],"acceptedDenialStatuses":[403]},
+    {"testId":"H11","actorRef":"patient-a","resourceRef":"file-a-101","operationRef":"file.read","method":"GET","expectation":"ALLOW","requiredControls":["H01"],"acceptedDenialStatuses":[]},
+    {"testId":"H12","actorRef":"patient-b","resourceRef":"file-a-101","operationRef":"file.read","method":"GET","expectation":"DENY","requiredControls":["H02","H11"],"acceptedDenialStatuses":[403]},
+    {"testId":"H13","actorRef":"patient-a","resourceRef":"record-a-101","operationRef":"patient.edit","method":"PATCH","mutationRef":"patient.owner.reassign","expectation":"DENY","requiredControls":["H01"],"acceptedDenialStatuses":[400]}
+  ]
+}

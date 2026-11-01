@@ -1,0 +1,13 @@
+# Local configuration and generated files
+node_modules/
+**/node_modules/
+.env
+.env.*
+!.env.example
+.runtime/
+**/.runtime/
+*.log
+.DS_Store
+coverage/
+dist/
+*.tsbuildinfo

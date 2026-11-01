@@ -1,0 +1,33 @@
+{
+  "name": "cantheyseeit-generic-verifier-v2",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "start": "tsx src/server.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:sprout": "node --experimental-strip-types tests/sprout-live.mjs",
+    "register:sprout": "node scripts/register-sprout.mjs",
+    "lab:start": "node scripts/start-sprout-lab.mjs",
+    "hospital:start": "node lab/hospital-synthetic-lab/server.mjs",
+    "dashboard:check": "node --check dashboard/app.js",
+    "test:frontend": "node --test tests/frontend/*.test.mjs",
+    "test:multisite": "node --test tests/link/*.test.mjs",
+    "fest:start": "node lab/aetherfest-college-lab/src/server.mjs",
+    "register:fest": "node scripts/register-aetherfest.mjs",
+    "test:fest:live": "node scripts/check-aetherfest-live.mjs"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.10.0",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}
