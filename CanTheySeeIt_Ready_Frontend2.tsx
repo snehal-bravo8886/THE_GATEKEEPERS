@@ -70,7 +70,8 @@ type TestResult = {
 };
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:4000";
-// Demo mode is for UI demonstrations only; it does not perform real security tests.\nconst DEMO_MODE = import.meta.env.VITE_DEMO_MODE === "true";
+// Demo mode is for UI demonstrations only; it does not perform real security tests.
+const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === "true";
 const HISTORY_KEY = "cantheyseeit-test-history-v2";
 
 const actors: Actor[] = [
